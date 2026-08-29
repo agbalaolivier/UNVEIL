@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert
+  ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image
 } from 'react-native';
 import { Search, Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, FileText } from 'lucide-react-native';
-import { API_BASE_URL } from '@/config';
+
+const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<'search' | 'raw'>('search');
@@ -208,6 +209,19 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* FOOTER WAKA'S COMPANY SUR LA PAGE D'ACCUEIL */}
+        <View style={styles.footerCompany}>
+          <Image 
+            source={require('../../assets/images/waka-logo.png')} 
+            style={styles.companyLogo}
+            resizeMode="contain"
+          />
+          <Text style={styles.footerText}>
+            Application développée par <Text style={styles.footerTextBold}>Waka's Company</Text>
+          </Text>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -235,7 +249,7 @@ const styles = StyleSheet.create({
   decodeRawButton: { backgroundColor: '#6366F1', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, padding: 12, borderRadius: 8 },
   decodeRawButtonText: { color: '#FFFFFF', fontWeight: 'bold' },
 
-  scrollContent: { padding: 16 },
+  scrollContent: { padding: 16, paddingBottom: 40 },
   loadingContainer: { marginTop: 40, alignItems: 'center' },
   loadingText: { color: '#9CA3AF', marginTop: 16, fontSize: 14 },
 
@@ -273,5 +287,30 @@ const styles = StyleSheet.create({
   sourceItem: { color: '#9CA3AF', fontSize: 12 },
 
   shareButton: { backgroundColor: '#6366F1', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, padding: 14, borderRadius: 10, marginTop: 8 },
-  shareButtonText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 }
+  shareButtonText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
+
+  /* STYLE FOOTER WAKA'S COMPANY */
+  footerCompany: { 
+    marginTop: 32, 
+    paddingTop: 20, 
+    borderTopWidth: 1, 
+    borderTopColor: '#1F2937', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    gap: 8 
+  },
+  companyLogo: { 
+    width: 40, 
+    height: 40, 
+    borderRadius: 8 
+  },
+  footerText: { 
+    color: '#6B7280', 
+    fontSize: 12, 
+    textAlign: 'center' 
+  },
+  footerTextBold: { 
+    color: '#9CA3AF', 
+    fontWeight: 'bold' 
+  }
 });
