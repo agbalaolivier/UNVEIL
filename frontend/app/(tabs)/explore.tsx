@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, 
     borderTopColor: '#1F2937', 
     alignItems: 'center', 
-    justify: 'center',
+    justifyContent: 'center',
     gap: 8 
   },
   companyLogo: { 

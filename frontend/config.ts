@@ -1,22 +1,20 @@
-// Configuration de l'API backend
-// ⚠️ IMPORTANT : Remplacez 192.168.X.X par votre adresse IP locale !
-// Pour trouver votre IP : ouvrez terminal et tapez 'ipconfig' (Windows) ou 'ifconfig' (Mac/Linux)
-// Cherchez l'adresse IPv4 de votre connexion réseau
+import Constants from 'expo-constants';
 
 // Détectez automatiquement le mode développement
-const isDevelopment = __DEV__; // Cette variable est disponible dans Expo
+const isDevelopment = __DEV__;
+
+// Sur téléphone physique, 127.0.0.1 / localhost pointe vers le téléphone lui-même.
+// Il faut utiliser l'IP du PC sur le même réseau Wi‑Fi.
+const expoHost = Constants.expoConfig?.hostUri ?? '192.168.1.90:19000';
+const localIp = expoHost.split(':')[0] || '192.168.1.90';
 
 // Configuration pour le développement local
-const LOCAL_API_URL = 'http://192.168.1.90:5000/api'; // ✅ IP configurée: 192.168.1.90
+const LOCAL_API_URL = `http://${localIp}:5000/api`;
 
 // Configuration pour la production
-const PRODUCTION_API_URL = 'https://api.example.com/api'; // À remplacer par votre URL de production
+const PRODUCTION_API_URL = 'https://api.example.com/api';
 
 export const API_BASE_URL = isDevelopment ? LOCAL_API_URL : PRODUCTION_API_URL;
 
-// Instructions pour configurer l'IP :
-// 1. Ouvrez PowerShell/Terminal
-// 2. Tapez : ipconfig (Windows) ou ifconfig (Mac/Linux)
-// 3. Cherchez "IPv4 Address" sous votre adaptateur réseau actif
-// 4. Remplacez "192.168.X.X" par cette adresse ci-dessus
-// 5. Assurez-vous que votre mobile/émulateur est sur le MÊME réseau WiFi que votre ordinateur
+// Si l'IP détectée par Expo est incorrecte, remplacez la valeur ci-dessus :
+// const LOCAL_API_URL = 'http://192.168.1.90:5000/api';

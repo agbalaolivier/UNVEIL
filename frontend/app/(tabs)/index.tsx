@@ -4,8 +4,7 @@ import {
   ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image
 } from 'react-native';
 import { Search, Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, FileText } from 'lucide-react-native';
-
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
+import { API_BASE_URL } from '../../config';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<'search' | 'raw'>('search');
