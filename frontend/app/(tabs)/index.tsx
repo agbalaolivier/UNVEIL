@@ -4,7 +4,36 @@ import {
   ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image
 } from 'react-native';
 import { Search, Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, FileText } from 'lucide-react-native';
-const API_BASE_URL = 'https://unveil-vs1v.onrender.com/api';
+import { API_BASE_URL } from '../../config';
+
+// Données des 5 bulles/cartes
+const INTRO_CARDS = [
+  {
+    tag: 'CONCEPT',
+    title: 'Dévoile l’omission',
+    desc: 'UNVEIL détecte les couches cachées d’un message, d’une chanson ou d’un discours.'
+  },
+  {
+    tag: 'SOURCES',
+    title: 'Formats pris en charge',
+    desc: 'Musiques, discours politiques, textes littéraires ou contenus inconnus.'
+  },
+  {
+    tag: 'ÉTAPE 1',
+    title: ' Signal',
+    desc: 'Identifie la piste, l’œuvre ou colle directement le texte à analyser.'
+  },
+  {
+    tag: 'ÉTAPE 2',
+    title: ' Décryptage',
+    desc: 'Le système décortique le sens apparent et le sous-texte implicite.'
+  },
+  {
+    tag: 'ÉTAPE 3',
+    title: ' Interprétation',
+    desc: 'Obtiens une lecture plus claire, profonde et étayée par des sources.'
+  }
+];
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<'search' | 'raw'>('search');
@@ -68,8 +97,28 @@ export default function HomeScreen() {
 
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.logoTitle}>UNVEIL</Text>
+        <View style={styles.brandWrap}>
+          <Text style={styles.logoTitle}>UNVEIL</Text>
+          <View style={styles.brandDot} />
+        </View>
         <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
+      </View>
+
+      {/* LES 5 BULLES HORIZONTALES (JUSTE APRÈS LE SLOGAN) */}
+      <View style={styles.horizontalScrollWrapper}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScrollContent}
+        >
+          {INTRO_CARDS.map((card, idx) => (
+            <View key={idx} style={styles.infoBubbleCard}>
+              <Text style={styles.bubbleTag}>{card.tag}</Text>
+              <Text style={styles.bubbleTitle}>{card.title}</Text>
+              <Text style={styles.bubbleDesc}>{card.desc}</Text>
+            </View>
+          ))}
+        </ScrollView>
       </View>
 
       {/* MODE SELECTION */}
@@ -78,7 +127,7 @@ export default function HomeScreen() {
           style={[styles.tabButton, activeTab === 'search' && styles.activeTabButton]}
           onPress={() => { setActiveTab('search'); setResult(null); }}
         >
-          <Search color={activeTab === 'search' ? '#FFFFFF' : '#9CA3AF'} size={16} />
+          <Search color={activeTab === 'search' ? '#FFFFFF' : '#7DD3FC'} size={16} />
           <Text style={[styles.tabText, activeTab === 'search' && styles.activeTabText]}>Rechercher</Text>
         </TouchableOpacity>
 
@@ -86,55 +135,55 @@ export default function HomeScreen() {
           style={[styles.tabButton, activeTab === 'raw' && styles.activeTabButton]}
           onPress={() => { setActiveTab('raw'); setResult(null); }}
         >
-          <FileText color={activeTab === 'raw' ? '#FFFFFF' : '#9CA3AF'} size={16} />
+          <FileText color={activeTab === 'raw' ? '#FFFFFF' : '#7DD3FC'} size={16} />
           <Text style={[styles.tabText, activeTab === 'raw' && styles.activeTabText]}>Texte inconnu</Text>
         </TouchableOpacity>
       </View>
 
-      {/* SEARCH MODE */}
-      {activeTab === 'search' && (
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Chanson, poème, discours..."
-            placeholderTextColor="#6B7280"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={() => handleDecode()}
-          />
-          <TouchableOpacity style={styles.searchButton} onPress={() => handleDecode()}>
-            <Search color="#FFFFFF" size={20} />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* RAW TEXT MODE */}
-      {activeTab === 'raw' && (
-        <View style={styles.rawInputWrapper}>
-          <TextInput
-            style={styles.rawTitleInput}
-            placeholder="Titre de l'œuvre (optionnel)"
-            placeholderTextColor="#6B7280"
-            value={rawTitle}
-            onChangeText={setRawTitle}
-          />
-          <TextInput
-            style={styles.rawTextInput}
-            placeholder="Collez ici les paroles ou le texte complet à déchiffrer..."
-            placeholderTextColor="#6B7280"
-            multiline
-            numberOfLines={4}
-            value={rawText}
-            onChangeText={setRawText}
-          />
-          <TouchableOpacity style={styles.decodeRawButton} onPress={handleDecodeRawText}>
-            <Sparkles color="#FFFFFF" size={18} />
-            <Text style={styles.decodeRawButtonText}>Décoder le sous-texte du texte</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* SEARCH MODE */}
+        {activeTab === 'search' && (
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Chanson, poème, discours..."
+              placeholderTextColor="#6B7280"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={() => handleDecode()}
+            />
+            <TouchableOpacity style={styles.searchButton} onPress={() => handleDecode()}>
+              <Search color="#FFFFFF" size={20} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* RAW TEXT MODE */}
+        {activeTab === 'raw' && (
+          <View style={styles.rawInputWrapper}>
+            <TextInput
+              style={styles.rawTitleInput}
+              placeholder="Titre de l'œuvre (optionnel)"
+              placeholderTextColor="#6B7280"
+              value={rawTitle}
+              onChangeText={setRawTitle}
+            />
+            <TextInput
+              style={styles.rawTextInput}
+              placeholder="Collez ici les paroles ou le texte complet à déchiffrer..."
+              placeholderTextColor="#6B7280"
+              multiline
+              numberOfLines={4}
+              value={rawText}
+              onChangeText={setRawText}
+            />
+            <TouchableOpacity style={styles.decodeRawButton} onPress={handleDecodeRawText}>
+              <Sparkles color="#FFFFFF" size={18} />
+              <Text style={styles.decodeRawButtonText}>Décoder le sous-texte du texte</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#6366F1" />
@@ -227,28 +276,62 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0B0F19' },
-  header: { alignItems: 'center', marginTop: 40, marginBottom: 16 },
-  logoTitle: { fontSize: 26, fontWeight: '900', color: '#6366F1', letterSpacing: 3 },
-  slogan: { fontSize: 12, color: '#9CA3AF', marginTop: 2, fontStyle: 'italic' },
+  container: { flex: 1, backgroundColor: '#050B14' },
+  header: { alignItems: 'center', marginTop: 32, marginBottom: 14 },
+  brandWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logoTitle: { fontSize: 26, fontWeight: '900', color: '#7DD3FC', letterSpacing: 4 },
+  brandDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#8B5CF6', shadowColor: '#8B5CF6', shadowOpacity: 0.9, shadowRadius: 10 },
+  slogan: { fontSize: 12, color: '#9DB7C9', marginTop: 6, letterSpacing: 1.1, textTransform: 'uppercase' },
   
-  tabContainer: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: '#1F2937', borderRadius: 10, padding: 4 },
-  tabButton: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 8, borderRadius: 8 },
-  activeTabButton: { backgroundColor: '#6366F1' },
-  tabText: { color: '#9CA3AF', fontSize: 13, fontWeight: '600' },
+  /* STYLES DES 5 BULLES HORIZONTALES */
+  horizontalScrollWrapper: { marginBottom: 16 },
+  horizontalScrollContent: { paddingHorizontal: 16, gap: 10 },
+  infoBubbleCard: {
+    width: 210,
+    backgroundColor: '#0B1220',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#1D4ED8',
+    justifyContent: 'flex-start',
+  },
+  bubbleTag: {
+    color: '#7DD3FC',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  bubbleTitle: {
+    color: '#F8FBFF',
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  bubbleDesc: {
+    color: '#9CA3AF',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+
+  tabContainer: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: '#0E1726', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#1F3A4D' },
+  tabButton: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: 10 },
+  activeTabButton: { backgroundColor: '#1D4ED8', shadowColor: '#60A5FA', shadowOpacity: 0.4, shadowRadius: 12 },
+  tabText: { color: '#7DD3FC', fontSize: 13, fontWeight: '700' },
   activeTabText: { color: '#FFFFFF' },
 
-  searchContainer: { flexDirection: 'row', marginHorizontal: 16, backgroundColor: '#1F2937', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#374151' },
+  searchContainer: { flexDirection: 'row', backgroundColor: '#0E1726', borderRadius: 14, padding: 5, borderWidth: 1, borderColor: '#1E3A5F', shadowColor: '#38BDF8', shadowOpacity: 0.2, shadowRadius: 12, elevation: 4 },
   searchInput: { flex: 1, color: '#FFFFFF', paddingHorizontal: 16, fontSize: 15 },
-  searchButton: { backgroundColor: '#6366F1', padding: 12, borderRadius: 8, justifyContent: 'center' },
+  searchButton: { backgroundColor: '#2563EB', padding: 12, borderRadius: 10, justifyContent: 'center', shadowColor: '#60A5FA', shadowOpacity: 0.4, shadowRadius: 12 },
 
-  rawInputWrapper: { marginHorizontal: 16, gap: 8 },
-  rawTitleInput: { backgroundColor: '#1F2937', color: '#FFFFFF', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#374151' },
-  rawTextInput: { backgroundColor: '#1F2937', color: '#FFFFFF', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#374151', height: 90, textAlignVertical: 'top' },
-  decodeRawButton: { backgroundColor: '#6366F1', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, padding: 12, borderRadius: 8 },
+  rawInputWrapper: { gap: 8 },
+  rawTitleInput: { backgroundColor: '#0E1726', color: '#FFFFFF', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#1E3A5F' },
+  rawTextInput: { backgroundColor: '#0E1726', color: '#FFFFFF', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#1E3A5F', height: 90, textAlignVertical: 'top' },
+  decodeRawButton: { backgroundColor: '#2563EB', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, padding: 12, borderRadius: 10 },
   decodeRawButtonText: { color: '#FFFFFF', fontWeight: 'bold' },
 
-  scrollContent: { padding: 16, paddingBottom: 40 },
+  scrollContent: { paddingHorizontal: 16, paddingBottom: 40 },
+
   loadingContainer: { marginTop: 40, alignItems: 'center' },
   loadingText: { color: '#9CA3AF', marginTop: 16, fontSize: 14 },
 
@@ -288,7 +371,6 @@ const styles = StyleSheet.create({
   shareButton: { backgroundColor: '#6366F1', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, padding: 14, borderRadius: 10, marginTop: 8 },
   shareButtonText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
 
-  /* STYLE FOOTER WAKA'S COMPANY */
   footerCompany: { 
     marginTop: 32, 
     paddingTop: 20, 

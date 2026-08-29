@@ -1,20 +1,19 @@
 import Constants from 'expo-constants';
 
-// Détectez automatiquement le mode développement
-const isDevelopment = __DEV__;
+const customApiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+const localApiFallback = 'http://192.168.1.90:5000/api';
+const remoteApiFallback = 'https://unveil-vs1v.onrender.com/api';
 
-// Sur téléphone physique, 127.0.0.1 / localhost pointe vers le téléphone lui-même.
-// Il faut utiliser l'IP du PC sur le même réseau Wi‑Fi.
+const isNativeApp = typeof navigator === 'undefined' || navigator.product !== 'ReactNative';
 const expoHost = Constants.expoConfig?.hostUri ?? '192.168.1.90:19000';
 const localIp = expoHost.split(':')[0] || '192.168.1.90';
-
-// Configuration pour le développement local
 const LOCAL_API_URL = `http://${localIp}:5000/api`;
 
-// Configuration pour la production
-const PRODUCTION_API_URL = 'https://unveil-vs1v.onrender.com/api';
+// Web browser / previews : utiliser l’API distante par défaut.
+// Expo native : utiliser l’IP locale du PC sur le même réseau.
+export const API_BASE_URL = customApiUrl || (isNativeApp ? remoteApiFallback : LOCAL_API_URL);
 
-export const API_BASE_URL = isDevelopment ? LOCAL_API_URL : PRODUCTION_API_URL;
-
-// Si l'IP détectée par Expo est incorrecte, remplacez la valeur ci-dessus :
-// const LOCAL_API_URL = 'http://192.168.1.90:5000/api';
+// Pour forcer un backend local :
+// EXPO_PUBLIC_API_BASE_URL=http://192.168.1.90:5000/api
+// ou remplacez directement la valeur ci-dessous :
+// export const API_BASE_URL = 'http://192.168.1.90:5000/api';
