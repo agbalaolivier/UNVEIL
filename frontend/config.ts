@@ -12,7 +12,7 @@ const localIp = expoHost.split(':')[0] || '192.168.1.90';
 const LOCAL_API_URL = `http://${localIp}:5000/api`;
 
 // Configuration pour la production
-const PRODUCTION_API_URL = 'https://api.example.com/api';
+const PRODUCTION_API_URL = 'https://unveil-vs1v.onrender.com/api';
 
 export const API_BASE_URL = isDevelopment ? LOCAL_API_URL : PRODUCTION_API_URL;
 

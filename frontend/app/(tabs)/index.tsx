@@ -4,7 +4,7 @@ import {
   ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image
 } from 'react-native';
 import { Search, Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, FileText } from 'lucide-react-native';
-import { API_BASE_URL } from '../../config';
+const API_BASE_URL = 'https://unveil-vs1v.onrender.com/api';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<'search' | 'raw'>('search');
