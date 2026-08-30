@@ -207,14 +207,14 @@ export default function HomeScreen() {
             <Text style={styles.authorText}>par {result.author}</Text>
 
             <View style={styles.maskCard}>
-              <Text style={styles.cardHeaderTitle}>🎭 LE MASQUE (Ce qu'on entend)</Text>
+              <Text style={styles.cardHeaderTitle}>🎭 RÉSUMÉ CONTEXTUEL (Ce qu'on entend)</Text>
               <Text style={styles.cardContentText}>{result.mask}</Text>
             </View>
 
             <View style={styles.realityCard}>
               <View style={styles.realityHeader}>
                 <Sparkles color="#C084FC" size={18} />
-                <Text style={styles.realityHeaderTitle}>🔓 LA RÉALITÉ (Le sous-texte)</Text>
+                <Text style={styles.realityHeaderTitle}>🔓 ANALISE SÉMIOTIQUE (Le sous-texte)</Text>
               </View>
               <Text style={styles.realityContentText}>{result.reality}</Text>
             </View>
