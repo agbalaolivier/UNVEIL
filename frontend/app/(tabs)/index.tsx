@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image,Dimensions,
+  ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image, Dimensions, Placeholders, Platform
 } from 'react-native';
 import { Search, Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, FileText } from 'lucide-react-native';
 import { API_BASE_URL } from '../../config';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.75; // Chaque carte prend 75% de la largeur de l'écran
-
 
 // Données des 5 bulles/cartes
 const INTRO_CARDS = [
@@ -24,17 +22,17 @@ const INTRO_CARDS = [
   },
   {
     tag: 'ÉTAPE 1',
-    title: ' Signal',
+    title: 'Signal',
     desc: 'Identifie la piste, l’œuvre ou colle directement le texte à analyser.'
   },
   {
     tag: 'ÉTAPE 2',
-    title: ' Décryptage',
+    title: 'Décryptage',
     desc: 'Le système décortique le sens apparent et le sous-texte implicite.'
   },
   {
     tag: 'ÉTAPE 3',
-    title: ' Interprétation',
+    title: 'Interprétation',
     desc: 'Obtiens une lecture plus claire, profonde et étayée par des sources.'
   }
 ];
@@ -97,7 +95,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0B0F19" />
+      <StatusBar barStyle="light-content" backgroundColor="#050B14" />
 
       {/* HEADER */}
       <View style={styles.header}>
@@ -108,27 +106,28 @@ export default function HomeScreen() {
         <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
       </View>
 
-      {/* LES 5 BULLES HORIZONTALES (JUSTE APRÈS LE SLOGAN) */}
+      {/* LES 5 BULLES HORIZONTALES FIXÉES POUR WEB & MOBILE */}
       <View style={styles.horizontalScrollWrapper}>
-  <ScrollView 
-    horizontal 
-    showsHorizontalScrollIndicator={false}
-    snapToInterval={CARD_WIDTH + 12} // Calage automatique par carte (largeur + marge)
-    decelerationRate="fast"
-    contentContainerStyle={styles.horizontalScrollContent}
-  >
-    {INTRO_CARDS.map((card, idx) => (
-      <View key={idx} style={styles.infoBubbleCard}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.bubbleTag}>{card.tag}</Text>
-          <Text style={styles.cardIndex}>{idx + 1}/5</Text>
-        </View>
-        <Text style={styles.bubbleTitle}>{card.title}</Text>
-        <Text style={styles.bubbleDesc}>{card.desc}</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={272} // 260px de largeur + 12px de gap
+          contentContainerStyle={styles.horizontalScrollContent}
+        >
+          {INTRO_CARDS.map((card, idx) => (
+            <View key={idx} style={styles.infoBubbleCard}>
+              <View style={styles.cardHeaderRow}>
+                <Text style={styles.bubbleTag}>{card.tag}</Text>
+                <Text style={styles.cardIndex}>{idx + 1}/5</Text>
+              </View>
+              <Text style={styles.bubbleTitle}>{card.title}</Text>
+              <Text style={styles.bubbleDesc}>{card.desc}</Text>
+            </View>
+          ))}
+        </ScrollView>
       </View>
-    ))}
-  </ScrollView>
-</View>
+
       {/* MODE SELECTION */}
       <View style={styles.tabContainer}>
         <TouchableOpacity 
@@ -284,34 +283,40 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#050B14' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#050B14',
+    width: '100%',
+    alignSelf: 'center',
+  },
   header: { alignItems: 'center', marginTop: 32, marginBottom: 14 },
   brandWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   logoTitle: { fontSize: 26, fontWeight: '900', color: '#7DD3FC', letterSpacing: 4 },
-  brandDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#8B5CF6', shadowColor: '#8B5CF6', shadowOpacity: 0.9, shadowRadius: 10 },
+  brandDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#8B5CF6' },
   slogan: { fontSize: 12, color: '#9DB7C9', marginTop: 6, letterSpacing: 1.1, textTransform: 'uppercase' },
   
-  /* STYLES DES 5 BULLES HORIZONTALES */
+  /* STYLES FIXES MULTI-PLATEFORME (WEB + MOBILE) */
   horizontalScrollWrapper: { 
-    marginVertical: 12 
+    marginVertical: 12,
+    height: 140, // Hauteur explicite pour éviter l'effondrement sur Web
+    width: '100%',
   },
   horizontalScrollContent: { 
     paddingHorizontal: 16, 
-    gap: 12 
+    gap: 12,
+    flexDirection: 'row', // Force l'alignement horizontal
+    alignItems: 'center',
   },
   infoBubbleCard: {
-    width: CARD_WIDTH,
+    width: 260,
+    height: 130, // Hauteur fixe uniforme
     backgroundColor: '#0E1726',
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#1E3A5F',
-    // Ombres légères pour donner du relief
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
+    flexShrink: 0, // EMPÊCHE TOUT ÉCRASEMENT SUR WEB
+    justifyContent: 'flex-start',
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -332,24 +337,24 @@ const styles = StyleSheet.create({
   },
   bubbleTitle: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   bubbleDesc: {
     color: '#94A3B8',
-    fontSize: 12.5,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
   },
   tabContainer: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: '#0E1726', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#1F3A4D' },
   tabButton: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: 10 },
-  activeTabButton: { backgroundColor: '#1D4ED8', shadowColor: '#60A5FA', shadowOpacity: 0.4, shadowRadius: 12 },
+  activeTabButton: { backgroundColor: '#1D4ED8' },
   tabText: { color: '#7DD3FC', fontSize: 13, fontWeight: '700' },
   activeTabText: { color: '#FFFFFF' },
 
-  searchContainer: { flexDirection: 'row', backgroundColor: '#0E1726', borderRadius: 14, padding: 5, borderWidth: 1, borderColor: '#1E3A5F', shadowColor: '#38BDF8', shadowOpacity: 0.2, shadowRadius: 12, elevation: 4 },
+  searchContainer: { flexDirection: 'row', backgroundColor: '#0E1726', borderRadius: 14, padding: 5, borderWidth: 1, borderColor: '#1E3A5F' },
   searchInput: { flex: 1, color: '#FFFFFF', paddingHorizontal: 16, fontSize: 15 },
-  searchButton: { backgroundColor: '#2563EB', padding: 12, borderRadius: 10, justifyContent: 'center', shadowColor: '#60A5FA', shadowOpacity: 0.4, shadowRadius: 12 },
+  searchButton: { backgroundColor: '#2563EB', padding: 12, borderRadius: 10, justifyContent: 'center' },
 
   rawInputWrapper: { gap: 8 },
   rawTitleInput: { backgroundColor: '#0E1726', color: '#FFFFFF', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#1E3A5F' },
