@@ -37,7 +37,7 @@ export default function ExploreScreen() {
         <View style={styles.methodologyContainer}>
           {/* LE MASQUE */}
           <View style={styles.maskBox}>
-            <Text style={styles.boxTag}>🎭 LE MASQUE</Text>
+            <Text style={styles.boxTag}>🎭 Résumé contextuel</Text>
             <Text style={styles.boxTitle}>Ce qu'on entend / lit</Text>
             <Text style={styles.boxDescription}>
               Le sens littéral, l'histoire de surface et la narrative évidente perçue au premier degré.
@@ -47,7 +47,7 @@ export default function ExploreScreen() {
           {/* LA REALITE */}
           <View style={styles.realityBox}>
             <Text style={styles.boxTagPurple}>🔓 LA RÉALITÉ</Text>
-            <Text style={styles.boxTitlePurple}>Le sous-texte caché</Text>
+            <Text style={styles.boxTitlePurple}>Analyse sémiotique</Text>
             <Text style={styles.boxDescriptionPurple}>
               Le contexte historique, la critique sociale, les métaphores inconscientes et le consensus académique.
             </Text>

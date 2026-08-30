@@ -12,28 +12,28 @@ const { width } = Dimensions.get('window');
 const INTRO_CARDS = [
   {
     tag: 'CONCEPT',
-    title: 'Dévoile l’omission',
-    desc: 'UNVEIL détecte les couches cachées d’un message, d’une chanson ou d’un discours.'
+    title: 'lire entre les lignes ',
+    desc: 'UNVEIL analyse une chanson, une poésie ou un discours pour en révéler le sens caché.'
   },
   {
     tag: 'SOURCES',
     title: 'Formats pris en charge',
-    desc: 'Musiques, discours politiques, textes littéraires ou contenus inconnus.'
+    desc: 'Musiques, Discours politiques, Textes littéraires, ou contenus inconnus.'
   },
   {
     tag: 'ÉTAPE 1',
-    title: 'Signal',
-    desc: 'Identifie la piste, l’œuvre ou colle directement le texte à analyser.'
+    title: 'Recherche',
+    desc: 'Saisissez un titre connu, ou collez directement le texte à analyser.'
   },
   {
     tag: 'ÉTAPE 2',
     title: 'Décryptage',
-    desc: 'Le système décortique le sens apparent et le sous-texte implicite.'
+    desc: 'UNVEIL décortique le sens apparent et le sous-texte implicite.'
   },
   {
     tag: 'ÉTAPE 3',
     title: 'Interprétation',
-    desc: 'Obtiens une lecture plus claire, profonde et étayée par des sources.'
+    desc: 'Obtenez une lecture plus claire, profonde et étayée par des sources.'
   }
 ];
 
