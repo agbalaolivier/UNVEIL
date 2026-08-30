@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image
+  ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image,Dimensions,
 } from 'react-native';
 import { Search, Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, FileText } from 'lucide-react-native';
 import { API_BASE_URL } from '../../config';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.75; // Chaque carte prend 75% de la largeur de l'écran
+
 
 // Données des 5 bulles/cartes
 const INTRO_CARDS = [
@@ -106,21 +110,25 @@ export default function HomeScreen() {
 
       {/* LES 5 BULLES HORIZONTALES (JUSTE APRÈS LE SLOGAN) */}
       <View style={styles.horizontalScrollWrapper}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalScrollContent}
-        >
-          {INTRO_CARDS.map((card, idx) => (
-            <View key={idx} style={styles.infoBubbleCard}>
-              <Text style={styles.bubbleTag}>{card.tag}</Text>
-              <Text style={styles.bubbleTitle}>{card.title}</Text>
-              <Text style={styles.bubbleDesc}>{card.desc}</Text>
-            </View>
-          ))}
-        </ScrollView>
+  <ScrollView 
+    horizontal 
+    showsHorizontalScrollIndicator={false}
+    snapToInterval={CARD_WIDTH + 12} // Calage automatique par carte (largeur + marge)
+    decelerationRate="fast"
+    contentContainerStyle={styles.horizontalScrollContent}
+  >
+    {INTRO_CARDS.map((card, idx) => (
+      <View key={idx} style={styles.infoBubbleCard}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.bubbleTag}>{card.tag}</Text>
+          <Text style={styles.cardIndex}>{idx + 1}/5</Text>
+        </View>
+        <Text style={styles.bubbleTitle}>{card.title}</Text>
+        <Text style={styles.bubbleDesc}>{card.desc}</Text>
       </View>
-
+    ))}
+  </ScrollView>
+</View>
       {/* MODE SELECTION */}
       <View style={styles.tabContainer}>
         <TouchableOpacity 
@@ -284,36 +292,55 @@ const styles = StyleSheet.create({
   slogan: { fontSize: 12, color: '#9DB7C9', marginTop: 6, letterSpacing: 1.1, textTransform: 'uppercase' },
   
   /* STYLES DES 5 BULLES HORIZONTALES */
-  horizontalScrollWrapper: { marginBottom: 16 },
-  horizontalScrollContent: { paddingHorizontal: 16, gap: 10 },
+  horizontalScrollWrapper: { 
+    marginVertical: 12 
+  },
+  horizontalScrollContent: { 
+    paddingHorizontal: 16, 
+    gap: 12 
+  },
   infoBubbleCard: {
-    width: 210,
-    backgroundColor: '#0B1220',
+    width: CARD_WIDTH,
+    backgroundColor: '#0E1726',
     borderRadius: 16,
-    padding: 14,
+    padding: 16,
     borderWidth: 1,
-    borderColor: '#1D4ED8',
-    justifyContent: 'flex-start',
+    borderColor: '#1E3A5F',
+    // Ombres légères pour donner du relief
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   bubbleTag: {
-    color: '#7DD3FC',
-    fontSize: 10,
+    color: '#38BDF8',
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 1,
-    marginBottom: 4,
+    letterSpacing: 1.2,
+  },
+  cardIndex: {
+    color: '#475569',
+    fontSize: 10,
+    fontWeight: '700',
   },
   bubbleTitle: {
-    color: '#F8FBFF',
-    fontSize: 14,
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
     marginBottom: 6,
   },
   bubbleDesc: {
-    color: '#9CA3AF',
-    fontSize: 12,
-    lineHeight: 16,
+    color: '#94A3B8',
+    fontSize: 12.5,
+    lineHeight: 18,
   },
-
   tabContainer: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: '#0E1726', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#1F3A4D' },
   tabButton: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: 10 },
   activeTabButton: { backgroundColor: '#1D4ED8', shadowColor: '#60A5FA', shadowOpacity: 0.4, shadowRadius: 12 },

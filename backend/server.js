@@ -24,8 +24,8 @@ app.post('/api/decode', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Recherche vide' });
     }
 
-    // Utilisation du modèle gemini-3.5-flash
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+    // Utilisation du modèle gemini-1.5-flash
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `Analyse l'œuvre suivante : "${searchTarget}".
     Génère un objet JSON strict répondant exactement à cette structure TypeScript sans markdown :
@@ -52,6 +52,7 @@ app.post('/api/decode', async (req, res) => {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
     console.log("--> Réponse de Gemini reçue !");
+    console.timeEnd("⏱️ Temps de décodage texte brut");
 
     const cleanedText = responseText.replace(/```json|```/g, '').trim();
     const parsedData = JSON.parse(cleanedText);
@@ -73,13 +74,13 @@ app.post('/api/decode-raw-text', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Texte vide' });
     }
 
-    // Utilisation du modèle gemini-3.5-flash
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
+    // Utilisation du modèle gemini-1.5-flash
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const workTitle = title || 'Texte inconnu';
     const prompt = `Analyse le texte ou les paroles suivantes${title ? ` de "${title}"` : ''} :
     
-"${rawText}"
+"${rawText}"`
 
 Génère un objet JSON strict répondant exactement à cette structure TypeScript sans markdown :
     {
