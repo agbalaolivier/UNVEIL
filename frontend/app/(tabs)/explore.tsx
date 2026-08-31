@@ -3,6 +3,12 @@ import { StyleSheet, Text, View, ScrollView, SafeAreaView, StatusBar, Linking, T
 import { Sparkles, Eye, BookOpen, Layers, Cpu, ExternalLink } from 'lucide-react-native';
 
 export default function ExploreScreen() {
+  
+
+  const openWakasCompany = () => {
+    Linking.openURL('https://waka-company.onrender.com');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0B0F19" />
@@ -93,18 +99,9 @@ export default function ExploreScreen() {
             <Text style={styles.techText}><Text style={styles.boldText}>Moteur IA :</Text> Google Gemini API</Text>
           </View>
         </View>
-
-        {/* GITHUB LINK */}
-        {/*<TouchableOpacity 
-          style={styles.githubButton} 
-          onPress={() => Linking.openURL('https://github.com/agbalaolivier/UNVEIL')}
-        >
-          <Text style={styles.githubButtonText}>Voir le projet sur GitHub</Text>
-          <ExternalLink color="#FFFFFF" size={16} />
-        </TouchableOpacity>*/}
-
-        {/* FOOTER WAKA'S COMPANY */}
-        <View style={styles.footerCompany}>
+        
+        {/* 2. Le footer devient un TouchableOpacity pour déclencher le lien */}
+        <TouchableOpacity style={styles.footerCompany} onPress={openWakasCompany}>
           <Image 
             source={require('../../assets/images/waka-logo.png')} 
             style={styles.companyLogo}
@@ -113,7 +110,7 @@ export default function ExploreScreen() {
           <Text style={styles.footerText}>
             Application développée par <Text style={styles.footerTextBold}>Waka's Company</Text>
           </Text>
-        </View>
+        </TouchableOpacity>
 
       </ScrollView>
     </SafeAreaView>
@@ -158,9 +155,6 @@ const styles = StyleSheet.create({
   techRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   techText: { color: '#9CA3AF', fontSize: 13 },
   boldText: { color: '#E5E7EB', fontWeight: 'bold' },
-
-  githubButton: { backgroundColor: '#6366F1', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, padding: 16, borderRadius: 12, marginTop: 8 },
-  githubButtonText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 15 },
 
   /* STYLE FOOTER WAKA'S COMPANY */
   footerCompany: { 
