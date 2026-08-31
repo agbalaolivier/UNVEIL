@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image, Share, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, ArrowLeft } from 'lucide-react-native';
-import BrainHeaderLogo from '../components/BrainHeaderLogo'; // Ajuste le chemin si besoin
+import BrainHeaderLogo from '../components/BrainHeaderLogo';
 
 export default function ResultScreen() {
   const router = useRouter();
@@ -11,6 +11,38 @@ export default function ResultScreen() {
 
   // Récupération des données passées depuis l'écran de recherche
   const result = params.data ? JSON.parse(params.data as string) : null;
+
+  // Fonction de partage placée À L'INTÉRIEUR du composant
+  const handleShare = async () => {
+    if (!result) return;
+    try {
+      const title = result.work_title || 'cette œuvre';
+      const author = result.author ? ` par ${result.author}` : '';
+      const shareMessage = `Découvre le sous-texte décodé de "${title}"${author} sur UNVEIL !`;
+      
+      const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://unveil.app';
+
+      if (Platform.OS === 'web') {
+        if (navigator.share) {
+          await navigator.share({
+            title: `UNVEIL - ${title}`,
+            text: shareMessage,
+            url: shareUrl,
+          });
+        } else if (navigator.clipboard) {
+          await navigator.clipboard.writeText(`${shareMessage} ${shareUrl}`);
+          Alert.alert('Succès', 'Le lien et le résumé ont été copiés dans le presse-papier !');
+        }
+      } else {
+        await Share.share({
+          message: `${shareMessage}\n${shareUrl}`,
+          url: shareUrl,
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors du partage :', error);
+    }
+  };
 
   if (!result) {
     return (
@@ -100,17 +132,18 @@ export default function ResultScreen() {
             </>
           )}
 
-          <TouchableOpacity style={styles.shareButton} onPress={() => Alert.alert("Story", "Fonctionnalité de partage à venir !")}>
+          {/* BOUTON CORRIGÉ QUI APPELLE handleShare */}
+          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
             <Share2 color="#FFFFFF" size={18} />
             <Text style={styles.shareButtonText}>Partager la vérité sur cette œuvre</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* FOOTER WAKA'S COMPANY (FIXE EN BAS DE PAGE) */}
+      {/* FOOTER WAKA'S COMPANY */}
       <View style={styles.footerCompany}>
         <Image 
-          source={require('../assets/images/waka-logo.png')} // Assure-toi que l'image existe
+          source={require('../assets/images/waka-logo.png')}
           style={styles.companyLogo}
           resizeMode="contain"
         />
@@ -131,7 +164,7 @@ const styles = StyleSheet.create({
   logoTitle: { fontSize: 24, fontWeight: '900', color: '#7DD3FC', letterSpacing: 4 },
   brandDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#8B5CF6' },
   slogan: { fontSize: 11, color: '#9DB7C9', marginTop: 4, letterSpacing: 1.1, textTransform: 'uppercase' },
-  scrollContent: { paddingHorizontal: 16, paddingBottom: 110 }, // Padding pour laisser place au footer fixe
+  scrollContent: { paddingHorizontal: 16, paddingBottom: 110 },
   resultCard: { backgroundColor: '#111827', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#1F2937', marginBottom: 20 },
   metaBadge: { alignSelf: 'flex-start', backgroundColor: '#374151', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 4 },
   metaBadgeText: { color: '#9CA3AF', fontSize: 10, fontWeight: 'bold' },
@@ -161,20 +194,18 @@ const styles = StyleSheet.create({
   sourceItem: { color: '#9CA3AF', fontSize: 12 },
   shareButton: { backgroundColor: '#6366F1', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, padding: 14, borderRadius: 10, marginTop: 8 },
   shareButtonText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
-
-  /* STYLE FOOTER (FIXE EN BAS) */
   footerCompany: { 
-    position: 'absolute', // Indispensable pour fixer
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#050B14', // Fond pour cacher le scroll dessous
-    paddingVertical: 16,
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    backgroundColor: '#050B14', 
+    paddingVertical: 16, 
     borderTopWidth: 1, 
     borderTopColor: '#1F2937', 
     alignItems: 'center', 
-    justifyContent: 'center',
-    flexDirection: 'row',
+    justifyContent: 'center', 
+    flexDirection: 'row', 
     gap: 10 
   },
   companyLogo: { width: 32, height: 32, borderRadius: 6 },
