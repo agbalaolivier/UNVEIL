@@ -149,6 +149,7 @@ export default function HomeScreen() {
               keyExtractor={(_, index) => index.toString()}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled={true}
+              snapToInterval={137}
               renderItem={({ item, index }) => (
                 <View style={styles.infoBubbleCardVertical}>
                   <View style={styles.cardHeaderRow}>
@@ -231,8 +232,8 @@ export default function HomeScreen() {
             <Text style={styles.loadingText}>Analyse sémiotique en cours...</Text>
           </View>
         )}
-
-        {/* FOOTER EN BAS */}
+      </ScrollView>
+       {/* FOOTER EN BAS */}
         <View style={styles.footerCompany}>
           <Image 
             source={require('../../assets/images/waka-logo.png')} 
@@ -244,7 +245,6 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -268,8 +268,8 @@ const styles = StyleSheet.create({
   webCard: { flex: 1, height: 135, backgroundColor: '#0E1726', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#1E3A5F', justifyContent: 'space-between' },
 
   /* STYLE MOBILE (CARROUSEL ULTRA COMPACT POUR TOUT FAIRE TENIR SANS SCROLL) */
-  mobileCarouselBox: { height: 125, width: '100%', marginBottom: 12, overflow: 'hidden', borderRadius: 12 },
-  infoBubbleCardVertical: { width: '100%', height: 120, backgroundColor: '#0E1726', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#1E3A5F', justifyContent: 'center', marginBottom: 8 },
+  mobileCarouselBox: { height: 270, width: '100%', marginBottom: 16, overflow: 'hidden', borderRadius: 14 },
+  infoBubbleCardVertical: { width: '100%', height: 125, backgroundColor: '#0E1726', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#1E3A5F', justifyContent: 'space-between', marginBottom: 12 },
 
   /* CARTES CONTENT */
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   loadingText: { color: '#9CA3AF', marginTop: 8, fontSize: 12 },
 
   /* FOOTER COMPACT */
-  footerCompany: { marginTop: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#1F2937', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  footerCompany: { marginTop: 'auto', paddingTop: 24, paddingBottom: 12, borderTopWidth: 1, borderTopColor: '#1F2937', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   companyLogo: { width: 22, height: 22, borderRadius: 4 },
   footerText: { color: '#6B7280', fontSize: 10, textAlign: 'center' },
   footerTextBold: { color: '#9CA3AF', fontWeight: 'bold' }
