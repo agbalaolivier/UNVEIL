@@ -107,27 +107,28 @@ export default function HomeScreen() {
 
         {/* CARROUSEL VERTICAL FIXE (SEULE LA CARTE 1 EST VISIBLE AU DÉPART) */}
         <View style={styles.verticalCarouselBox}>
-          <FlatList
-            data={INTRO_CARDS}
-            keyExtractor={(_, index) => index.toString()}
-            showsVerticalScrollIndicator={false}
-            snapToInterval={130} // Hauteur d'une carte
-            snapToAlignment="start"
-            decelerationRate="fast"
-            nestedScrollEnabled={true}
-            style={{ height: 130 }}
-            renderItem={({ item, index }) => (
-              <View style={styles.infoBubbleCardVertical}>
-                <View style={styles.cardHeaderRow}>
-                  <Text style={styles.bubbleTag}>{item.tag}</Text>
-                  <Text style={styles.cardIndex}>{index + 1}/5</Text>
-                </View>
-                <Text style={styles.bubbleTitle}>{item.title}</Text>
-                <Text style={styles.bubbleDesc}>{item.desc}</Text>
-              </View>
-            )}
-          />
-        </View>
+         <FlatList
+  data={INTRO_CARDS}
+  keyExtractor={(_, index) => index.toString()}
+  showsVerticalScrollIndicator={true} // Affiche la barre de défilement
+  indicatorStyle="white" // Couleur de la scrollbar pour fond sombre
+  snapToInterval={140} // Hauteur de la carte (130) + l'espacement (10)
+  snapToAlignment="start"
+  decelerationRate="fast"
+  nestedScrollEnabled={true}
+  style={{ height: 130 }}
+  renderItem={({ item, index }) => (
+    <View style={styles.infoBubbleCardVertical}>
+      <View style={styles.cardHeaderRow}>
+        <Text style={styles.bubbleTag}>{item.tag}</Text>
+        <Text style={styles.cardIndex}>{index + 1}/5</Text>
+      </View>
+      <Text style={styles.bubbleTitle}>{item.title}</Text>
+      <Text style={styles.bubbleDesc}>{item.desc}</Text>
+    </View>
+  )}
+/>
+</View>
 
         {/* MODE SELECTION */}
         <View style={styles.tabContainer}>
@@ -314,6 +315,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1E3A5F',
     justifyContent: 'center',
+    marginBottom: 10,
   },
 
   cardHeaderRow: {
