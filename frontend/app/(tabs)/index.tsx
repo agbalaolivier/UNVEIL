@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image, Dimensions, Placeholders, Platform
+  ScrollView, FlatList, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image
 } from 'react-native';
 import { Search, Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, FileText } from 'lucide-react-native';
 import { API_BASE_URL } from '../../config';
 
-const { width } = Dimensions.get('window');
-
-// Données des 5 bulles/cartes
 const INTRO_CARDS = [
   {
     tag: 'CONCEPT',
-    title: 'lire entre les lignes ',
+    title: 'lire entre les lignes',
     desc: 'UNVEIL analyse une chanson, une poésie ou un discours pour en révéler le sens caché.'
   },
   {
@@ -106,48 +103,51 @@ export default function HomeScreen() {
         <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
       </View>
 
-      {/* LES 5 BULLES HORIZONTALES FIXÉES POUR WEB & MOBILE */}
-      <View style={styles.horizontalScrollWrapper}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={272} // 260px de largeur + 12px de gap
-          contentContainerStyle={styles.horizontalScrollContent}
-        >
-          {INTRO_CARDS.map((card, idx) => (
-            <View key={idx} style={styles.infoBubbleCard}>
-              <View style={styles.cardHeaderRow}>
-                <Text style={styles.bubbleTag}>{card.tag}</Text>
-                <Text style={styles.cardIndex}>{idx + 1}/5</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} nestedScrollEnabled={true}>
+
+        {/* CARROUSEL VERTICAL FIXE (SEULE LA CARTE 1 EST VISIBLE AU DÉPART) */}
+        <View style={styles.verticalCarouselBox}>
+          <FlatList
+            data={INTRO_CARDS}
+            keyExtractor={(_, index) => index.toString()}
+            showsVerticalScrollIndicator={false}
+            snapToInterval={130} // Hauteur d'une carte
+            snapToAlignment="start"
+            decelerationRate="fast"
+            nestedScrollEnabled={true}
+            style={{ height: 130 }}
+            renderItem={({ item, index }) => (
+              <View style={styles.infoBubbleCardVertical}>
+                <View style={styles.cardHeaderRow}>
+                  <Text style={styles.bubbleTag}>{item.tag}</Text>
+                  <Text style={styles.cardIndex}>{index + 1}/5</Text>
+                </View>
+                <Text style={styles.bubbleTitle}>{item.title}</Text>
+                <Text style={styles.bubbleDesc}>{item.desc}</Text>
               </View>
-              <Text style={styles.bubbleTitle}>{card.title}</Text>
-              <Text style={styles.bubbleDesc}>{card.desc}</Text>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+            )}
+          />
+        </View>
 
-      {/* MODE SELECTION */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'search' && styles.activeTabButton]}
-          onPress={() => { setActiveTab('search'); setResult(null); }}
-        >
-          <Search color={activeTab === 'search' ? '#FFFFFF' : '#7DD3FC'} size={16} />
-          <Text style={[styles.tabText, activeTab === 'search' && styles.activeTabText]}>Rechercher</Text>
-        </TouchableOpacity>
+        {/* MODE SELECTION */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tabButton, activeTab === 'search' && styles.activeTabButton]}
+            onPress={() => { setActiveTab('search'); setResult(null); }}
+          >
+            <Search color={activeTab === 'search' ? '#FFFFFF' : '#7DD3FC'} size={16} />
+            <Text style={[styles.tabText, activeTab === 'search' && styles.activeTabText]}>Rechercher</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'raw' && styles.activeTabButton]}
-          onPress={() => { setActiveTab('raw'); setResult(null); }}
-        >
-          <FileText color={activeTab === 'raw' ? '#FFFFFF' : '#7DD3FC'} size={16} />
-          <Text style={[styles.tabText, activeTab === 'raw' && styles.activeTabText]}>Texte inconnu</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity 
+            style={[styles.tabButton, activeTab === 'raw' && styles.activeTabButton]}
+            onPress={() => { setActiveTab('raw'); setResult(null); }}
+          >
+            <FileText color={activeTab === 'raw' ? '#FFFFFF' : '#7DD3FC'} size={16} />
+            <Text style={[styles.tabText, activeTab === 'raw' && styles.activeTabText]}>Texte inconnu</Text>
+          </TouchableOpacity>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* SEARCH MODE */}
         {activeTab === 'search' && (
           <View style={styles.searchContainer}>
@@ -265,7 +265,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* FOOTER WAKA'S COMPANY SUR LA PAGE D'ACCUEIL */}
+        {/* FOOTER WAKA'S COMPANY */}
         <View style={styles.footerCompany}>
           <Image 
             source={require('../../assets/images/waka-logo.png')} 
@@ -295,29 +295,27 @@ const styles = StyleSheet.create({
   brandDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#8B5CF6' },
   slogan: { fontSize: 12, color: '#9DB7C9', marginTop: 6, letterSpacing: 1.1, textTransform: 'uppercase' },
   
-  /* STYLES FIXES MULTI-PLATEFORME (WEB + MOBILE) */
-  horizontalScrollWrapper: { 
-    marginVertical: 12,
-    height: 140, // Hauteur explicite pour éviter l'effondrement sur Web
+  scrollContent: { paddingHorizontal: 16, paddingBottom: 40 },
+
+  /* FENÊTRE VERTICALE FIXE À 130PX POUR LE SCROLL DES CARTES */
+  verticalCarouselBox: {
+    height: 130,
     width: '100%',
+    marginBottom: 16,
+    overflow: 'hidden',
+    borderRadius: 16,
   },
-  horizontalScrollContent: { 
-    paddingHorizontal: 16, 
-    gap: 12,
-    flexDirection: 'row', // Force l'alignement horizontal
-    alignItems: 'center',
-  },
-  infoBubbleCard: {
-    width: 260,
-    height: 130, // Hauteur fixe uniforme
+  infoBubbleCardVertical: {
+    width: '100%',
+    height: 130,
     backgroundColor: '#0E1726',
     borderRadius: 16,
-    padding: 14,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#1E3A5F',
-    flexShrink: 0, // EMPÊCHE TOUT ÉCRASEMENT SUR WEB
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
   },
+
   cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -346,7 +344,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  tabContainer: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: '#0E1726', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#1F3A4D' },
+
+  tabContainer: { flexDirection: 'row', marginBottom: 12, backgroundColor: '#0E1726', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#1F3A4D' },
   tabButton: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: 10 },
   activeTabButton: { backgroundColor: '#1D4ED8' },
   tabText: { color: '#7DD3FC', fontSize: 13, fontWeight: '700' },
@@ -361,8 +360,6 @@ const styles = StyleSheet.create({
   rawTextInput: { backgroundColor: '#0E1726', color: '#FFFFFF', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#1E3A5F', height: 90, textAlignVertical: 'top' },
   decodeRawButton: { backgroundColor: '#2563EB', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, padding: 12, borderRadius: 10 },
   decodeRawButtonText: { color: '#FFFFFF', fontWeight: 'bold' },
-
-  scrollContent: { paddingHorizontal: 16, paddingBottom: 40 },
 
   loadingContainer: { marginTop: 40, alignItems: 'center' },
   loadingText: { color: '#9CA3AF', marginTop: 16, fontSize: 14 },
