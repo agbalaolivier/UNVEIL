@@ -39,7 +39,13 @@ const INTRO_CARDS = [
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const isWebOrTablet = width > 768; // Détection écran large / PC
+const [isMounted, setIsMounted] = useState(false);
+
+React.useEffect(() => {
+  setIsMounted(true);
+}, []);
+
+const isWebOrTablet = isMounted && width > 768;
 
   const [activeTab, setActiveTab] = useState<'search' | 'raw'>('search');
   const [searchQuery, setSearchQuery] = useState('');
