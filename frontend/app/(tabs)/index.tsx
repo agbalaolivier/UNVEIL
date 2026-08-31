@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, FlatList, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image
+  ScrollView, FlatList, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image, useWindowDimensions
 } from 'react-native';
 import { Search, Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, FileText } from 'lucide-react-native';
 import { API_BASE_URL } from '../../config';
+import BrainHeaderLogo from '../../components/BrainHeaderLogo';
+
+
 
 const INTRO_CARDS = [
   {
@@ -35,6 +38,10 @@ const INTRO_CARDS = [
 ];
 
 export default function HomeScreen() {
+  const { width } = useWindowDimensions();
+  const isWebOrTablet = width > 600;
+  const contentWidth = Math.min(width - 32, 800);
+  const cardWidthOnWeb = (contentWidth - 12) / 2;
   const [activeTab, setActiveTab] = useState<'search' | 'raw'>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [rawTitle, setRawTitle] = useState('');
@@ -96,40 +103,44 @@ export default function HomeScreen() {
 
       {/* HEADER */}
       <View style={styles.header}>
-        <View style={styles.brandWrap}>
-          <Text style={styles.logoTitle}>UNVEIL</Text>
-          <View style={styles.brandDot} />
-        </View>
-        <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
-      </View>
+  <BrainHeaderLogo size={120} />
+
+  <View style={styles.brandWrap}>
+    <Text style={styles.logoTitle}>UNVEIL</Text>
+    <View style={styles.brandDot} />
+  </View>
+  <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
+</View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} nestedScrollEnabled={true}>
 
         {/* CARROUSEL VERTICAL FIXE (SEULE LA CARTE 1 EST VISIBLE AU DÉPART) */}
-        <View style={styles.verticalCarouselBox}>
-         <FlatList
-  data={INTRO_CARDS}
-  keyExtractor={(_, index) => index.toString()}
-  showsVerticalScrollIndicator={true} // Affiche la barre de défilement
-  indicatorStyle="white" // Couleur de la scrollbar pour fond sombre
-  snapToInterval={140} // Hauteur de la carte (130) + l'espacement (10)
-  snapToAlignment="start"
-  decelerationRate="fast"
-  nestedScrollEnabled={true}
-  style={{ height: 130 }}
-  renderItem={({ item, index }) => (
-    <View style={styles.infoBubbleCardVertical}>
-      <View style={styles.cardHeaderRow}>
-        <Text style={styles.bubbleTag}>{item.tag}</Text>
-        <Text style={styles.cardIndex}>{index + 1}/5</Text>
+        <View style={isWebOrTablet ? styles.horizontalCarouselBox : styles.verticalCarouselBox}>
+  <FlatList
+    data={INTRO_CARDS}
+    keyExtractor={(_, index) => index.toString()}
+    horizontal={isWebOrTablet} // Horizontal sur PC, Vertical sur mobile
+    showsHorizontalScrollIndicator={isWebOrTablet}
+    showsVerticalScrollIndicator={!isWebOrTablet}
+    indicatorStyle="white"
+    snapToInterval={isWebOrTablet ? 320 : 140} // Calage selon le mode
+    snapToAlignment="start"
+    decelerationRate="fast"
+    nestedScrollEnabled={true}
+    style={{ height: 130 }}
+    contentContainerStyle={isWebOrTablet ? { gap: 12 } : undefined}
+    renderItem={({ item, index }) => (
+      <View style={isWebOrTablet ? styles.infoBubbleCardHorizontal : styles.infoBubbleCardVertical}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.bubbleTag}>{item.tag}</Text>
+          <Text style={styles.cardIndex}>{index + 1}/5</Text>
+        </View>
+        <Text style={styles.bubbleTitle}>{item.title}</Text>
+        <Text style={styles.bubbleDesc}>{item.desc}</Text>
       </View>
-      <Text style={styles.bubbleTitle}>{item.title}</Text>
-      <Text style={styles.bubbleDesc}>{item.desc}</Text>
-    </View>
-  )}
-/>
+    )}
+  />
 </View>
-
         {/* MODE SELECTION */}
         <View style={styles.tabContainer}>
           <TouchableOpacity 
@@ -306,6 +317,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 16,
   },
+
+  horizontalCarouselBox: {
+    height: 130,
+    width: '100%',
+    marginBottom: 16,
+  },
   infoBubbleCardVertical: {
     width: '100%',
     height: 130,
@@ -316,6 +333,17 @@ const styles = StyleSheet.create({
     borderColor: '#1E3A5F',
     justifyContent: 'center',
     marginBottom: 10,
+  },
+
+  infoBubbleCardHorizontal: {
+    width: 255, 
+    height: 130,
+    backgroundColor: '#0E1726',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#1E3A5F',
+    justifyContent: 'center',
   },
 
   cardHeaderRow: {
