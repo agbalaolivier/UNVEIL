@@ -268,8 +268,8 @@ const styles = StyleSheet.create({
   webCard: { flex: 1, height: 135, backgroundColor: '#0E1726', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#1E3A5F', justifyContent: 'space-between' },
 
   /* STYLE MOBILE (CARROUSEL ULTRA COMPACT POUR TOUT FAIRE TENIR SANS SCROLL) */
-  mobileCarouselBox: { height: 105, width: '100%', marginBottom: 12, overflow: 'hidden', borderRadius: 12 },
-  infoBubbleCardVertical: { width: '100%', height: 100, backgroundColor: '#0E1726', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#1E3A5F', justifyContent: 'center', marginBottom: 8 },
+  mobileCarouselBox: { height: 125, width: '100%', marginBottom: 12, overflow: 'hidden', borderRadius: 12 },
+  infoBubbleCardVertical: { width: '100%', height: 120, backgroundColor: '#0E1726', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#1E3A5F', justifyContent: 'center', marginBottom: 8 },
 
   /* CARTES CONTENT */
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },

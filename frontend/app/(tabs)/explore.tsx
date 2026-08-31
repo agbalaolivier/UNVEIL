@@ -95,13 +95,13 @@ export default function ExploreScreen() {
         </View>
 
         {/* GITHUB LINK */}
-        <TouchableOpacity 
+        {/*<TouchableOpacity 
           style={styles.githubButton} 
           onPress={() => Linking.openURL('https://github.com/agbalaolivier/UNVEIL')}
         >
           <Text style={styles.githubButtonText}>Voir le projet sur GitHub</Text>
           <ExternalLink color="#FFFFFF" size={16} />
-        </TouchableOpacity>
+        </TouchableOpacity>*/}
 
         {/* FOOTER WAKA'S COMPANY */}
         <View style={styles.footerCompany}>
