@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image, Share, Platform } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, ArrowLeft } from 'lucide-react-native';
 import BrainHeaderLogo from '../components/BrainHeaderLogo';
 
@@ -54,6 +54,9 @@ export default function ResultScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <Stack.Screen options={{ headerShown: false }} />
+
       <StatusBar barStyle="light-content" backgroundColor="#050B14" />
 
       {/* HEADER FIXE (LOGO + TITRE + RETOUR) */}
