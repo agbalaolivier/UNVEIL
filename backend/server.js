@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import NodeCache from 'node-cache'; // Import de node-cache
+import NodeCache from 'node-cache';
 
 dotenv.config();
 
@@ -10,7 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialisation du cache (conservation en mémoire pendant 24 heures = 86400 secondes)
 const myCache = new NodeCache({ stdTTL: 86400 });
 
 console.log("--> Clé API chargée :", process.env.GEMINI_API_KEY ? "OUI" : "NON (VIDE !)");
@@ -29,14 +28,11 @@ app.post('/api/decode', async (req, res) => {
     const searchTarget = query || title;
 
     if (!searchTarget) {
-      console.log("--> Erreur : Recherche vide");
       return res.status(400).json({ success: false, error: 'Recherche vide' });
     }
 
-    // Normalisation de la clef (minuscules, sans espaces superflus)
     const cacheKey = searchTarget.trim().toLowerCase();
 
-    // Vérification dans le cache
     const cachedResult = myCache.get(cacheKey);
     if (cachedResult) {
       console.log(`⚡ [CACHE] Réponse instantanée pour : "${cacheKey}"`);
@@ -45,6 +41,7 @@ app.post('/api/decode', async (req, res) => {
 
     console.log(`🤖 [API GEMINI] Appel externe pour : "${cacheKey}"...`);
 
+    // Ajout du champ "full_text" dans la structure demandée à Gemini
     const prompt = `Analyse l'œuvre suivante : "${searchTarget}".
     Génère un objet JSON strict répondant exactement à cette structure :
     {
@@ -52,6 +49,7 @@ app.post('/api/decode', async (req, res) => {
       "year": "2013",
       "work_title": "${searchTarget}",
       "author": "Artiste",
+      "full_text": "Intégralité des paroles ou du texte original de l'œuvre (ou un extrait représentatif majeur si sous droits d'auteur très stricts)",
       "mask": "Explication courte du sens de surface",
       "reality": "Le sous-texte réel et le contexte caché",
       "key_insights": ["Point 1", "Point 2"],
@@ -69,7 +67,6 @@ app.post('/api/decode', async (req, res) => {
     const result = await model.generateContent(prompt);
     const parsedData = JSON.parse(result.response.text());
 
-    // Enregistrement dans le cache
     myCache.set(cacheKey, parsedData);
 
     res.json({ success: true, data: parsedData, cached: false });
@@ -85,14 +82,12 @@ app.post('/api/decode-raw-text', async (req, res) => {
     const { rawText, title } = req.body;
 
     if (!rawText || !rawText.trim()) {
-      console.log("--> Erreur : Texte vide");
       return res.status(400).json({ success: false, error: 'Texte vide' });
     }
 
     const workTitle = title || 'Texte inconnu';
     const cacheKey = `raw_${workTitle.trim().toLowerCase()}_${rawText.trim().toLowerCase()}`;
 
-    // Vérification dans le cache
     const cachedResult = myCache.get(cacheKey);
     if (cachedResult) {
       console.log(`⚡ [CACHE] Réponse instantanée pour texte brut : "${workTitle}"`);
@@ -109,6 +104,7 @@ Génère un objet JSON strict répondant exactement à cette structure :
       "year": "2024",
       "work_title": "${workTitle}",
       "author": "Auteur inconnu",
+      "full_text": "${rawText.replace(/"/g, '\\"')}",
       "mask": "Explication courte du sens de surface",
       "reality": "Le sous-texte réel et le contexte caché",
       "key_insights": ["Point 1", "Point 2"],
@@ -127,7 +123,6 @@ Génère un objet JSON strict répondant exactement à cette structure :
     const result = await model.generateContent(prompt);
     const parsedData = JSON.parse(result.response.text());
 
-    // Enregistrement dans le cache
     myCache.set(cacheKey, parsedData);
 
     res.json({ success: true, data: parsedData, cached: false });
