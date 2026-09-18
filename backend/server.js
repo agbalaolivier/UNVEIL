@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import NodeCache from 'node-cache'; // Import de node-cache
 
 dotenv.config();
 
@@ -9,11 +10,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Initialisation du cache (conservation en mémoire pendant 24 heures = 86400 secondes)
+const myCache = new NodeCache({ stdTTL: 86400 });
+
 console.log("--> Clé API chargée :", process.env.GEMINI_API_KEY ? "OUI" : "NON (VIDE !)");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Forcer le modèle à répondre au format JSON pur
 const model = genAI.getGenerativeModel({ 
   model: 'gemini-1.5-flash',
   generationConfig: { responseMimeType: 'application/json' }
@@ -30,8 +33,20 @@ app.post('/api/decode', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Recherche vide' });
     }
 
+    // Normalisation de la clef (minuscules, sans espaces superflus)
+    const cacheKey = searchTarget.trim().toLowerCase();
+
+    // Vérification dans le cache
+    const cachedResult = myCache.get(cacheKey);
+    if (cachedResult) {
+      console.log(`⚡ [CACHE] Réponse instantanée pour : "${cacheKey}"`);
+      return res.json({ success: true, data: cachedResult, cached: true });
+    }
+
+    console.log(`🤖 [API GEMINI] Appel externe pour : "${cacheKey}"...`);
+
     const prompt = `Analyse l'œuvre suivante : "${searchTarget}".
-    Génère un objet JSON strict répondant exactement à cette structure TypeScript sans markdown :
+    Génère un objet JSON strict répondant exactement à cette structure :
     {
       "category": "Musique",
       "year": "2013",
@@ -51,18 +66,13 @@ app.post('/api/decode', async (req, res) => {
       }
     }`;
 
-    console.log("--> Envoi du prompt à Gemini...");
-    console.time("⏱️ Temps de décodage");
-    
     const result = await model.generateContent(prompt);
-    
-    console.timeEnd("⏱️ Temps de décodage");
-    console.log("--> Réponse de Gemini reçue !");
+    const parsedData = JSON.parse(result.response.text());
 
-    const responseText = result.response.text();
-    const parsedData = JSON.parse(responseText);
+    // Enregistrement dans le cache
+    myCache.set(cacheKey, parsedData);
 
-    res.json({ success: true, data: parsedData });
+    res.json({ success: true, data: parsedData, cached: false });
   } catch (error) {
     console.error('❌ ERREUR COMPLÈTE BACKEND :', error);
     res.status(500).json({ success: false, error: error.message });
@@ -80,13 +90,20 @@ app.post('/api/decode-raw-text', async (req, res) => {
     }
 
     const workTitle = title || 'Texte inconnu';
-    
-    // ✅ SYNTAXE CORRIGÉE : La chaîne template literal englobe maintenant tout le prompt correctement
+    const cacheKey = `raw_${workTitle.trim().toLowerCase()}_${rawText.trim().toLowerCase()}`;
+
+    // Vérification dans le cache
+    const cachedResult = myCache.get(cacheKey);
+    if (cachedResult) {
+      console.log(`⚡ [CACHE] Réponse instantanée pour texte brut : "${workTitle}"`);
+      return res.json({ success: true, data: cachedResult, cached: true });
+    }
+
     const prompt = `Analyse le texte ou les paroles suivantes${title ? ` de "${title}"` : ''} :
 
 "${rawText}"
 
-Génère un objet JSON strict répondant exactement à cette structure TypeScript sans markdown :
+Génère un objet JSON strict répondant exactement à cette structure :
     {
       "category": "Texte",
       "year": "2024",
@@ -108,12 +125,12 @@ Génère un objet JSON strict répondant exactement à cette structure TypeScrip
 
     console.log("--> Envoi du prompt texte brut à Gemini...");
     const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    console.log("--> Réponse de Gemini reçue !");
+    const parsedData = JSON.parse(result.response.text());
 
-    const parsedData = JSON.parse(responseText);
+    // Enregistrement dans le cache
+    myCache.set(cacheKey, parsedData);
 
-    res.json({ success: true, data: parsedData });
+    res.json({ success: true, data: parsedData, cached: false });
   } catch (error) {
     console.error('❌ ERREUR COMPLÈTE BACKEND :', error);
     res.status(500).json({ success: false, error: error.message });
