@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image, Share, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, ArrowLeft } from 'lucide-react-native';
+import { Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, ArrowLeft, FileText } from 'lucide-react-native';
 import BrainHeaderLogo from '../components/BrainHeaderLogo';
 
 export default function ResultScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [showSources, setShowSources] = useState(false);
+  const [showFullText, setShowFullText] = useState(false); // État pour afficher/masquer le texte complet
 
   // Récupération des données passées depuis l'écran de recherche
   const result = params.data ? JSON.parse(params.data as string) : null;
 
-  // Fonction de partage placée À L'INTÉRIEUR du composant
+  // Fonction de partage
   const handleShare = async () => {
     if (!result) return;
     try {
@@ -83,11 +84,13 @@ export default function ResultScreen() {
           <Text style={styles.workTitle}>{result.work_title}</Text>
           <Text style={styles.authorText}>par {result.author}</Text>
 
+          {/* RÉSUMÉ CONTEXTUEL */}
           <View style={styles.maskCard}>
             <Text style={styles.cardHeaderTitle}>🎭 RÉSUMÉ CONTEXTUEL (Ce qu'on entend)</Text>
             <Text style={styles.cardContentText}>{result.mask}</Text>
           </View>
 
+          {/* ANALYSE SÉMIOTIQUE */}
           <View style={styles.realityCard}>
             <View style={styles.realityHeader}>
               <Sparkles color="#C084FC" size={18} />
@@ -96,6 +99,7 @@ export default function ResultScreen() {
             <Text style={styles.realityContentText}>{result.reality}</Text>
           </View>
 
+          {/* POINTS CLÉS */}
           <View style={styles.sectionBox}>
             <Text style={styles.sectionBoxTitle}>💡 EN BREF</Text>
             {result.key_insights?.map((insight: string, index: number) => (
@@ -106,6 +110,29 @@ export default function ResultScreen() {
             ))}
           </View>
 
+          {/* NOUVEAU : ACCORDÉON POUR LE TEXTE / PAROLES COMPLÈTES */}
+          {result.full_text && (
+            <View style={styles.fullTextContainer}>
+              <TouchableOpacity 
+                style={styles.fullTextHeader} 
+                onPress={() => setShowFullText(!showFullText)}
+              >
+                <View style={styles.accordionTitleGroup}>
+                  <FileText color="#7DD3FC" size={18} />
+                  <Text style={styles.fullTextTitle}>Relire le texte / paroles complètes</Text>
+                </View>
+                {showFullText ? <ChevronUp color="#7DD3FC" size={18} /> : <ChevronDown color="#7DD3FC" size={18} />}
+              </TouchableOpacity>
+
+              {showFullText && (
+                <View style={styles.fullTextContent}>
+                  <Text style={styles.fullTextBody}>{result.full_text}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* CITATION DÉCODÉE */}
           {result.decoded_quote && (
             <View style={styles.quoteBox}>
               <Text style={styles.quoteText}>"{result.decoded_quote.original_text}"</Text>
@@ -113,6 +140,7 @@ export default function ResultScreen() {
             </View>
           )}
 
+          {/* CONSENSUS / SOURCES */}
           {result.academic_consensus && (
             <>
               <TouchableOpacity style={styles.accordionHeader} onPress={() => setShowSources(!showSources)}>
@@ -135,7 +163,7 @@ export default function ResultScreen() {
             </>
           )}
 
-          {/* BOUTON CORRIGÉ QUI APPELLE handleShare */}
+          {/* BOUTON DE PARTAGE */}
           <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
             <Share2 color="#FFFFFF" size={18} />
             <Text style={styles.shareButtonText}>Partager la vérité sur cette œuvre</Text>
@@ -185,6 +213,14 @@ const styles = StyleSheet.create({
   bulletRow: { flexDirection: 'row', marginBottom: 6 },
   bulletDot: { color: '#6366F1', marginRight: 8, fontSize: 16 },
   bulletText: { color: '#D1D5DB', fontSize: 14, flex: 1, lineHeight: 20 },
+  
+  /* NOUVEAUX STYLES POUR LE TEXTE COMPLET */
+  fullTextContainer: { marginBottom: 16, borderRadius: 10, backgroundColor: '#0B132B', borderWidth: 1, borderColor: '#1E293B', overflow: 'hidden' },
+  fullTextHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
+  fullTextTitle: { color: '#7DD3FC', fontSize: 13, fontWeight: 'bold' },
+  fullTextContent: { padding: 14, borderTopWidth: 1, borderTopColor: '#1E293B', backgroundColor: '#070D19' },
+  fullTextBody: { color: '#94A3B8', fontSize: 13, lineHeight: 22, fontStyle: 'italic' },
+
   quoteBox: { backgroundColor: '#000000', padding: 14, borderRadius: 10, borderLeftWidth: 3, borderLeftColor: '#6366F1', marginBottom: 16 },
   quoteText: { color: '#FFFFFF', fontSize: 14, fontStyle: 'italic', marginBottom: 4 },
   quoteMeaning: { color: '#A5B4FC', fontSize: 13, fontWeight: '500' },
