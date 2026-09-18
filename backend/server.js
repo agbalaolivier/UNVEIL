@@ -13,6 +13,12 @@ console.log("--> Clé API chargée :", process.env.GEMINI_API_KEY ? "OUI" : "NON
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Forcer le modèle à répondre au format JSON pur
+const model = genAI.getGenerativeModel({ 
+  model: 'gemini-1.5-flash',
+  generationConfig: { responseMimeType: 'application/json' }
+});
+
 app.post('/api/decode', async (req, res) => {
   console.log("--> Requête reçue ! Données :", req.body);
   try {
@@ -23,9 +29,6 @@ app.post('/api/decode', async (req, res) => {
       console.log("--> Erreur : Recherche vide");
       return res.status(400).json({ success: false, error: 'Recherche vide' });
     }
-
-    // Utilisation du modèle gemini-1.5-flash
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `Analyse l'œuvre suivante : "${searchTarget}".
     Génère un objet JSON strict répondant exactement à cette structure TypeScript sans markdown :
@@ -49,13 +52,15 @@ app.post('/api/decode', async (req, res) => {
     }`;
 
     console.log("--> Envoi du prompt à Gemini...");
+    console.time("⏱️ Temps de décodage");
+    
     const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    
+    console.timeEnd("⏱️ Temps de décodage");
     console.log("--> Réponse de Gemini reçue !");
-    console.timeEnd("⏱️ Temps de décodage texte brut");
 
-    const cleanedText = responseText.replace(/```json|```/g, '').trim();
-    const parsedData = JSON.parse(cleanedText);
+    const responseText = result.response.text();
+    const parsedData = JSON.parse(responseText);
 
     res.json({ success: true, data: parsedData });
   } catch (error) {
@@ -74,13 +79,12 @@ app.post('/api/decode-raw-text', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Texte vide' });
     }
 
-    // Utilisation du modèle gemini-1.5-flash
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
     const workTitle = title || 'Texte inconnu';
-    const prompt = `Analyse le texte ou les paroles suivantes${title ? ` de "${title}"` : ''} :
     
-"${rawText}"`
+    // ✅ SYNTAXE CORRIGÉE : La chaîne template literal englobe maintenant tout le prompt correctement
+    const prompt = `Analyse le texte ou les paroles suivantes${title ? ` de "${title}"` : ''} :
+
+"${rawText}"
 
 Génère un objet JSON strict répondant exactement à cette structure TypeScript sans markdown :
     {
@@ -107,8 +111,7 @@ Génère un objet JSON strict répondant exactement à cette structure TypeScrip
     const responseText = result.response.text();
     console.log("--> Réponse de Gemini reçue !");
 
-    const cleanedText = responseText.replace(/```json|```/g, '').trim();
-    const parsedData = JSON.parse(cleanedText);
+    const parsedData = JSON.parse(responseText);
 
     res.json({ success: true, data: parsedData });
   } catch (error) {
