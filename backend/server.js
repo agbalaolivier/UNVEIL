@@ -16,10 +16,51 @@ console.log("--> Clé API chargée :", process.env.GEMINI_API_KEY ? "OUI" : "NON
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const model = genAI.getGenerativeModel({ 
-  model: 'gemini-3.6-flash',
-  generationConfig: { responseMimeType: 'application/json' }
-});
+const primaryModel = 'gemini-3.6-flash';
+const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash';
+
+const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
+
+const isRetryableError = (error) => {
+  const status = error?.status;
+  const message = error?.message || '';
+
+  if (status === 429 && /quota exceeded|free.?tier/i.test(message)) {
+    return false;
+  }
+
+  return [408, 429, 500, 502, 503, 504].includes(status)
+    || error?.code === 'ECONNRESET'
+    || error?.code === 'ETIMEDOUT'
+    || error?.name === 'TypeError';
+};
+
+async function generateWithFallback(prompt) {
+  const modelsToTry = [...new Set([primaryModel, fallbackModel].filter(Boolean))];
+  let lastError;
+
+  for (const modelName of modelsToTry) {
+    const model = genAI.getGenerativeModel({
+      model: modelName,
+      generationConfig: { responseMimeType: 'application/json' },
+    });
+
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        console.log(`🤖 [GEMINI] ${modelName}, tentative ${attempt}/2...`);
+        return await model.generateContent(prompt);
+      } catch (error) {
+        lastError = error;
+        console.warn(`⚠️ Échec avec ${modelName} (${error.status || error.code || 'inconnu'}).`);
+
+        if (!isRetryableError(error) || attempt === 2) break;
+        await sleep(800 * attempt);
+      }
+    }
+  }
+
+  throw lastError || new Error('Tous les modèles Gemini sont indisponibles pour le moment.');
+}
 
 app.post('/api/decode', async (req, res) => {
   console.log("--> Requête reçue ! Données :", req.body);
@@ -70,7 +111,7 @@ app.post('/api/decode', async (req, res) => {
       }
     }`;
 
-    const result = await model.generateContent(prompt);
+    const result = await generateWithFallback(prompt);
     const parsedData = JSON.parse(result.response.text());
 
     myCache.set(cacheKey, parsedData);
@@ -130,7 +171,7 @@ Génère un objet JSON strict répondant exactement à cette structure :
     }`;
 
     console.log("--> Envoi du prompt texte brut à Gemini...");
-    const result = await model.generateContent(prompt);
+    const result = await generateWithFallback(prompt);
     const parsedData = JSON.parse(result.response.text());
 
     myCache.set(cacheKey, parsedData);
