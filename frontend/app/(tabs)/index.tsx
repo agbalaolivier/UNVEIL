@@ -5,8 +5,11 @@ import {
 } from 'react-native';
 import { Search, Sparkles, FileText } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../config';
 import BrainHeaderLogo from '../../components/BrainHeaderLogo';
+
+const SEARCH_HISTORY_KEY = '@unveil/search-history';
 
 const INTRO_CARDS = [
   {
@@ -52,6 +55,40 @@ export default function HomeScreen() {
   const [rawTitle, setRawTitle] = useState('');
   const [rawText, setRawText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
+  useEffect(() => {
+    AsyncStorage.getItem(SEARCH_HISTORY_KEY)
+      .then((storedHistory) => {
+        if (!storedHistory) return;
+        const parsedHistory: unknown = JSON.parse(storedHistory);
+        if (Array.isArray(parsedHistory)) {
+          setSearchHistory(parsedHistory.filter((title): title is string => typeof title === 'string'));
+        }
+      })
+      .catch((error) => console.warn('Impossible de charger l’historique de recherche :', error));
+  }, []);
+
+  const matchingTitles = searchHistory
+    .filter((title) => title.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    .slice(0, 5);
+
+  const rememberTitle = async (title: string) => {
+    const normalizedTitle = title.trim();
+    if (!normalizedTitle) return;
+
+    const updatedHistory = [
+      normalizedTitle,
+      ...searchHistory.filter((item) => item.toLowerCase() !== normalizedTitle.toLowerCase()),
+    ].slice(0, 20);
+
+    setSearchHistory(updatedHistory);
+    try {
+      await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updatedHistory));
+    } catch (error) {
+      console.warn('Impossible d’enregistrer l’historique de recherche :', error);
+    }
+  };
 
   const handleDecode = async (overrideQuery?: string) => {
     const query = overrideQuery || searchQuery;
@@ -67,6 +104,7 @@ export default function HomeScreen() {
       });
       const data = await response.json();
       if (data.success) {
+        await rememberTitle(data.data?.work_title || query);
         router.push({
           pathname: '/result',
           params: { data: JSON.stringify(data.data) },
@@ -94,6 +132,7 @@ export default function HomeScreen() {
       });
       const data = await response.json();
       if (data.success) {
+        await rememberTitle(data.data?.work_title || rawTitle);
         router.push({
           pathname: '/result',
           params: { data: JSON.stringify(data.data) },
@@ -200,6 +239,25 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {activeTab === 'search' && searchQuery.trim() && matchingTitles.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            <Text style={styles.suggestionsLabel}>Déjà recherchées</Text>
+            {matchingTitles.map((title) => (
+              <TouchableOpacity
+                key={title}
+                style={styles.suggestionRow}
+                onPress={() => {
+                  setSearchQuery(title);
+                  handleDecode(title);
+                }}
+              >
+                <Search color="#7DD3FC" size={15} />
+                <Text style={styles.suggestionText} numberOfLines={1}>{title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* MODE TEXTE BRUT */}
         {activeTab === 'raw' && (
           <View style={styles.rawInputWrapper}>
@@ -287,6 +345,10 @@ const styles = StyleSheet.create({
   searchContainer: { flexDirection: 'row', backgroundColor: '#0E1726', borderRadius: 12, padding: 4, borderWidth: 1, borderColor: '#1E3A5F' },
   searchInput: { flex: 1, color: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 8, fontSize: 13 },
   searchButton: { backgroundColor: '#2563EB', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, justifyContent: 'center' },
+  suggestionsContainer: { backgroundColor: '#0E1726', borderWidth: 1, borderColor: '#1E3A5F', borderRadius: 10, marginTop: 6, paddingVertical: 5 },
+  suggestionsLabel: { color: '#64748B', fontSize: 10, fontWeight: '700', paddingHorizontal: 12, paddingVertical: 5, textTransform: 'uppercase', letterSpacing: 0.7 },
+  suggestionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 9 },
+  suggestionText: { color: '#E2E8F0', flex: 1, fontSize: 13 },
   
   /* TEXTE BRUT */
   rawInputWrapper: { gap: 6 },

@@ -84,10 +84,12 @@ export default function ResultScreen() {
           <Text style={styles.workTitle}>{result.work_title}</Text>
           <Text style={styles.authorText}>par {result.author}</Text>
 
-          {/* RÉSUMÉ CONTEXTUEL */}
+          {/* RÉSUMÉ DE L'ŒUVRE */}
           <View style={styles.maskCard}>
-            <Text style={styles.cardHeaderTitle}>🎭 RÉSUMÉ CONTEXTUEL (Ce qu'on entend)</Text>
-            <Text style={styles.cardContentText}>{result.mask}</Text>
+            <Text style={styles.cardHeaderTitle}>
+              {result.category?.toLowerCase() === 'livre' ? "📖 RÉSUMÉ DE L'AUTEUR" : "🎭 RÉSUMÉ CONTEXTUEL"}
+            </Text>
+            <Text style={styles.cardContentText}>{result.category?.toLowerCase() === 'livre' ? (result.author_summary || result.mask) : result.mask}</Text>
           </View>
 
           {/* ANALYSE SÉMIOTIQUE */}
@@ -110,7 +112,7 @@ export default function ResultScreen() {
             ))}
           </View>
 
-          {/* NOUVEAU : ACCORDÉON POUR LE TEXTE / PAROLES COMPLÈTES */}
+          {/* LECTURE DU TEXTE LORSQU'IL EST DISPONIBLE OU FOURNI PAR L'UTILISATEUR */}
           {result.full_text && (
             <View style={styles.fullTextContainer}>
               <TouchableOpacity 
@@ -119,7 +121,9 @@ export default function ResultScreen() {
               >
                 <View style={styles.accordionTitleGroup}>
                   <FileText color="#7DD3FC" size={18} />
-                  <Text style={styles.fullTextTitle}>Relire le texte / paroles complètes</Text>
+                  <Text style={styles.fullTextTitle}>
+                    {result.category?.toLowerCase() === 'poésie' ? 'Lire la poésie' : 'Lire le texte / les paroles'}
+                  </Text>
                 </View>
                 {showFullText ? <ChevronUp color="#7DD3FC" size={18} /> : <ChevronDown color="#7DD3FC" size={18} />}
               </TouchableOpacity>
@@ -129,6 +133,13 @@ export default function ResultScreen() {
                   <Text style={styles.fullTextBody}>{result.full_text}</Text>
                 </View>
               )}
+            </View>
+          )}
+
+          {!result.full_text && result.content_notice && (
+            <View style={styles.contentNotice}>
+              <FileText color="#FBBF24" size={18} />
+              <Text style={styles.contentNoticeText}>{result.content_notice}</Text>
             </View>
           )}
 
@@ -220,6 +231,8 @@ const styles = StyleSheet.create({
   fullTextTitle: { color: '#7DD3FC', fontSize: 13, fontWeight: 'bold' },
   fullTextContent: { padding: 14, borderTopWidth: 1, borderTopColor: '#1E293B', backgroundColor: '#070D19' },
   fullTextBody: { color: '#94A3B8', fontSize: 13, lineHeight: 22, fontStyle: 'italic' },
+  contentNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: '#422006', padding: 12, borderRadius: 10, marginBottom: 16 },
+  contentNoticeText: { color: '#FDE68A', flex: 1, fontSize: 12, lineHeight: 18 },
 
   quoteBox: { backgroundColor: '#000000', padding: 14, borderRadius: 10, borderLeftWidth: 3, borderLeftColor: '#6366F1', marginBottom: 16 },
   quoteText: { color: '#FFFFFF', fontSize: 14, fontStyle: 'italic', marginBottom: 4 },
