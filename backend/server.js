@@ -17,7 +17,7 @@ console.log("--> Clé API chargée :", process.env.GEMINI_API_KEY ? "OUI" : "NON
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({ 
-  model: 'gemini-1.5-flash',
+  model: 'gemini-3.6-flash',
   generationConfig: { responseMimeType: 'application/json' }
 });
 
@@ -41,15 +41,21 @@ app.post('/api/decode', async (req, res) => {
 
     console.log(`🤖 [API GEMINI] Appel externe pour : "${cacheKey}"...`);
 
-    // Ajout du champ "full_text" dans la structure demandée à Gemini
     const prompt = `Analyse l'œuvre suivante : "${searchTarget}".
+    Identifie précisément son type parmi "Chanson", "Poésie", "Livre", "Discours" ou "Autre".
+    Pour une chanson ou un poème, fournis le texte complet uniquement s'il est dans le domaine public.
+    Si le texte est protégé par le droit d'auteur, laisse "full_text" vide et explique dans "content_notice"
+    que l'utilisateur peut coller lui-même le texte dans l'onglet Texte inconnu pour le lire et l'analyser.
+    Pour un livre, ne fournis jamais le texte intégral : rédige plutôt un résumé fidèle de l'œuvre et de son propos dans "author_summary".
     Génère un objet JSON strict répondant exactement à cette structure :
     {
-      "category": "Musique",
+      "category": "Chanson",
       "year": "2013",
       "work_title": "${searchTarget}",
       "author": "Artiste",
-      "full_text": "Intégralité des paroles ou du texte original de l'œuvre (ou un extrait représentatif majeur si sous droits d'auteur très stricts)",
+      "full_text": "Texte complet uniquement si domaine public, sinon chaîne vide",
+      "content_notice": "Message court expliquant pourquoi le texte est disponible ou non",
+      "author_summary": "Résumé fidèle de l'œuvre, particulièrement utile pour un livre",
       "mask": "Explication courte du sens de surface",
       "reality": "Le sous-texte réel et le contexte caché",
       "key_insights": ["Point 1", "Point 2"],
@@ -98,6 +104,8 @@ app.post('/api/decode-raw-text', async (req, res) => {
 
 "${rawText}"
 
+Le texte fourni par l'utilisateur peut être affiché intégralement dans le résultat.
+Identifie son type parmi "Chanson", "Poésie", "Livre", "Discours" ou "Autre".
 Génère un objet JSON strict répondant exactement à cette structure :
     {
       "category": "Texte",
@@ -105,6 +113,8 @@ Génère un objet JSON strict répondant exactement à cette structure :
       "work_title": "${workTitle}",
       "author": "Auteur inconnu",
       "full_text": "${rawText.replace(/"/g, '\\"')}",
+  "content_notice": "Texte fourni par l'utilisateur",
+  "author_summary": "Résumé fidèle de l'œuvre ou du passage",
       "mask": "Explication courte du sens de surface",
       "reality": "Le sous-texte réel et le contexte caché",
       "key_insights": ["Point 1", "Point 2"],
