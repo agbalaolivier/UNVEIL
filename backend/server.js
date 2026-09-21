@@ -5,6 +5,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import NodeCache from 'node-cache';
 import { initializeDatabase } from './db.js';
 import { registerAuthRoutes, requireAuth } from './auth.js';
+import { pool } from './db.js';
+import crypto from 'node:crypto';
 
 dotenv.config();
 
@@ -12,6 +14,39 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 registerAuthRoutes(app);
+
+app.post('/api/share', requireAuth, async (req, res) => {
+  if (!pool) return res.status(503).json({ success: false, error: 'Partage non configuré.' });
+
+  try {
+    if (!req.body?.result || typeof req.body.result !== 'object') {
+      return res.status(400).json({ success: false, error: 'Résultat invalide.' });
+    }
+
+    const shareId = crypto.randomBytes(12).toString('base64url');
+    await pool.query('INSERT INTO shared_results (id, result) VALUES ($1, $2)', [shareId, req.body.result]);
+    return res.status(201).json({ success: true, shareId });
+  } catch (error) {
+    console.error('❌ ERREUR CRÉATION PARTAGE :', error);
+    return res.status(500).json({ success: false, error: 'Partage impossible pour le moment.' });
+  }
+});
+
+app.get('/api/share/:shareId', async (req, res) => {
+  if (!pool) return res.status(503).json({ success: false, error: 'Partage non configuré.' });
+
+  try {
+    const result = await pool.query(
+      'SELECT result FROM shared_results WHERE id = $1 AND expires_at > NOW()',
+      [req.params.shareId],
+    );
+    if (!result.rowCount) return res.status(404).json({ success: false, error: 'Partage introuvable ou expiré.' });
+    return res.json({ success: true, data: result.rows[0].result });
+  } catch (error) {
+    console.error('❌ ERREUR LECTURE PARTAGE :', error);
+    return res.status(500).json({ success: false, error: 'Partage indisponible pour le moment.' });
+  }
+});
 
 const myCache = new NodeCache({ stdTTL: 86400 });
 
@@ -122,7 +157,11 @@ app.post('/api/decode', requireAuth, async (req, res) => {
     res.json({ success: true, data: parsedData, cached: false });
   } catch (error) {
     console.error('❌ ERREUR COMPLÈTE BACKEND :', error);
-    res.status(500).json({ success: false, error: error.message });
+    const status = error?.status === 401 ? 503 : 500;
+    const message = error?.status === 401
+      ? 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY dans l’environnement du serveur.'
+      : error.message;
+    res.status(status).json({ success: false, error: message });
   }
 });
 
@@ -182,7 +221,11 @@ Génère un objet JSON strict répondant exactement à cette structure :
     res.json({ success: true, data: parsedData, cached: false });
   } catch (error) {
     console.error('❌ ERREUR COMPLÈTE BACKEND :', error);
-    res.status(500).json({ success: false, error: error.message });
+    const status = error?.status === 401 ? 503 : 500;
+    const message = error?.status === 401
+      ? 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY dans l’environnement du serveur.'
+      : error.message;
+    res.status(status).json({ success: false, error: message });
   }
 });
 

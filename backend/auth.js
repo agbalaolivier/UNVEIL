@@ -115,4 +115,17 @@ export function registerAuthRoutes(app) {
       return res.status(401).json({ success: false, error: 'Session expirée.' });
     }
   });
+
+  app.delete('/api/auth/account', requireAuth, async (req, res) => {
+    if (!pool) return res.status(503).json({ success: false, error: 'Authentification non configurée.' });
+
+    try {
+      const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [req.user.sub]);
+      if (!result.rowCount) return res.status(404).json({ success: false, error: 'Compte introuvable.' });
+      return res.json({ success: true });
+    } catch (error) {
+      console.error('❌ ERREUR SUPPRESSION COMPTE :', error);
+      return res.status(500).json({ success: false, error: 'Suppression impossible pour le moment.' });
+    }
+  });
 }
