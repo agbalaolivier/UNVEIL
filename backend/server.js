@@ -3,12 +3,15 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import NodeCache from 'node-cache';
+import { initializeDatabase } from './db.js';
+import { registerAuthRoutes, requireAuth } from './auth.js';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+registerAuthRoutes(app);
 
 const myCache = new NodeCache({ stdTTL: 86400 });
 
@@ -62,7 +65,7 @@ async function generateWithFallback(prompt) {
   throw lastError || new Error('Tous les modèles Gemini sont indisponibles pour le moment.');
 }
 
-app.post('/api/decode', async (req, res) => {
+app.post('/api/decode', requireAuth, async (req, res) => {
   console.log("--> Requête reçue ! Données :", req.body);
   try {
     const { query, title } = req.body;
@@ -123,7 +126,7 @@ app.post('/api/decode', async (req, res) => {
   }
 });
 
-app.post('/api/decode-raw-text', async (req, res) => {
+app.post('/api/decode-raw-text', requireAuth, async (req, res) => {
   console.log("--> Requête texte brut reçue ! Données :", req.body);
   try {
     const { rawText, title } = req.body;
@@ -184,6 +187,13 @@ Génère un objet JSON strict répondant exactement à cette structure :
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend Unveil actif sur le port ${PORT}`);
-});
+initializeDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Backend Unveil actif sur le port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('❌ Impossible d’initialiser la base utilisateurs :', error);
+    process.exit(1);
+  });
