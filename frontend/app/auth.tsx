@@ -39,6 +39,15 @@ export default function AuthScreen() {
           <BrainHeaderLogo size={76} />
           <Text style={styles.logo}>UNVEIL</Text>
           <Text style={styles.subtitle}>{mode === 'register' ? 'Crée ton espace de lecture' : 'Retrouve ton espace de lecture'}</Text>
+          <View style={styles.introBlock}>
+            <Text style={styles.introTitle}>Lire entre les lignes</Text>
+            <Text style={styles.introText}>
+              UNVEIL est une application d'analyse sémiotique qui révèle les sens cachés des œuvres culturelles : chansons, poésies, discours et textes littéraires.
+            </Text>
+            <Text style={styles.introPrompt}>
+              Crée ton compte ou connecte-toi pour commencer à décrypter.
+            </Text>
+          </View>
 
           <View style={styles.switcher}>
             <TouchableOpacity style={[styles.switchButton, mode === 'register' && styles.switchActive]} onPress={() => setMode('register')}>
@@ -76,6 +85,10 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, justifyContent: 'center', padding: 24, maxWidth: 520, width: '100%', alignSelf: 'center' },
   logo: { color: '#7DD3FC', fontSize: 28, fontWeight: '900', letterSpacing: 5, textAlign: 'center', marginTop: 8 },
   subtitle: { color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 6, marginBottom: 24 },
+  introBlock: { backgroundColor: '#0E1726', borderWidth: 1, borderColor: '#1E3A5F', borderRadius: 12, padding: 14, marginBottom: 18 },
+  introTitle: { color: '#F8FAFC', fontSize: 15, fontWeight: '800', textAlign: 'center', marginBottom: 7 },
+  introText: { color: '#A8B7C7', fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  introPrompt: { color: '#7DD3FC', fontSize: 12, fontWeight: '700', lineHeight: 18, textAlign: 'center', marginTop: 8 },
   switcher: { flexDirection: 'row', backgroundColor: '#0E1726', borderRadius: 10, padding: 3, marginBottom: 14, borderWidth: 1, borderColor: '#1E3A5F' },
   switchButton: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: 8 },
   switchActive: { backgroundColor: '#1D4ED8' },
