@@ -153,25 +153,33 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#050B14" />
 
-      <TouchableOpacity
-        accessibilityLabel="Ouvrir les paramètres du compte"
-        style={styles.settingsButton}
-        onPress={() => router.push('/settings')}
-      >
-        <Settings color="#7DD3FC" size={19} />
-        <Text style={styles.settingsName}>{user?.firstName || 'Compte'}</Text>
-      </TouchableOpacity>
-
-      {/* HEADER COMPACT (DESIGN MODERNE ET COMPACT POUR GAIN D'ESPACE) */}
-      <View style={isWebOrTablet ? styles.headerWeb : styles.headerMobile}>
-        <BrainHeaderLogo size={isWebOrTablet ? 90 : 50} />
-        <View style={styles.headerTextCol}>
-          <View style={styles.brandWrap}>
-            <Text style={styles.logoTitle}>UNVEIL</Text>
-            <View style={styles.brandDot} />
-          </View>
-          <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
+      {/* HEADER ADAPTATIF RÉORGANISÉ (ÉVITE LE CHEVAUCHEMENT EN MOBILE) */}
+      <View style={styles.headerWrapper}>
+        <View style={styles.headerSideLeft}>
+          <TouchableOpacity
+            accessibilityLabel="Ouvrir les paramètres du compte"
+            style={styles.settingsButton}
+            onPress={() => router.push('/settings')}
+          >
+            <Settings color="#7DD3FC" size={16} />
+            <Text style={styles.settingsName} numberOfLines={1}>
+              {user?.firstName || 'Compte'}
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        <View style={styles.headerCenter}>
+          <BrainHeaderLogo size={isWebOrTablet ? 80 : 44} />
+          <View style={styles.headerTextCol}>
+            <View style={styles.brandWrap}>
+              <Text style={styles.logoTitle}>UNVEIL</Text>
+              <View style={styles.brandDot} />
+            </View>
+            <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
+          </View>
+        </View>
+
+        <View style={styles.headerSideRight} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} nestedScrollEnabled={true}>
@@ -302,17 +310,18 @@ export default function HomeScreen() {
           </View>
         )}
       </ScrollView>
-       {/* FOOTER EN BAS */}
-        <View style={styles.footerCompany}>
-          <Image 
-            source={require('../../assets/images/waka-logo.png')} 
-            style={styles.companyLogo}
-            resizeMode="contain"
-          />
-          <Text style={styles.footerText}>
-            Application développée par <Text style={styles.footerTextBold}>Waka's Company</Text>
-          </Text>
-        </View>
+
+      {/* FOOTER EN BAS */}
+      <View style={styles.footerCompany}>
+        <Image 
+          source={require('../../assets/images/waka-logo.png')} 
+          style={styles.companyLogo}
+          resizeMode="contain"
+        />
+        <Text style={styles.footerText}>
+          Application développée par <Text style={styles.footerTextBold}>Waka's Company</Text>
+        </Text>
+      </View>
 
     </SafeAreaView>
   );
@@ -320,17 +329,49 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#050B14', width: '100%', alignSelf: 'center' },
-  settingsButton: { position: 'absolute', top: 12, left: 14, zIndex: 10, minWidth: 38, height: 38, borderRadius: 19, paddingHorizontal: 11, backgroundColor: '#0E1726', borderWidth: 1, borderColor: '#1E3A5F', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  settingsName: { color: '#7DD3FC', fontSize: 11, fontWeight: '700', maxWidth: 90 },
-  
-  /* HEADER PC VS MOBILE */
-  headerWeb: { alignItems: 'center', marginTop: 20, marginBottom: 16 },
-  headerMobile: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 10, marginBottom: 10, paddingHorizontal: 16, gap: 12 },
-  headerTextCol: { flexDirection: 'column' },
-  brandWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  logoTitle: { fontSize: 20, fontWeight: '900', color: '#7DD3FC', letterSpacing: 3 },
-  brandDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#8B5CF6' },
-  slogan: { fontSize: 10, color: '#9DB7C9', marginTop: 2, letterSpacing: 0.8, textTransform: 'uppercase' },
+
+  /* NOUVELLE STRUCTURE DE HEADER (RESPONSIVE) */
+  headerWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 10,
+    width: '100%',
+  },
+  headerSideLeft: {
+    minWidth: 80,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  headerSideRight: {
+    minWidth: 80, // Maintient l'équilibre avec la gauche pour centrer le logo
+  },
+  settingsButton: {
+    height: 34,
+    borderRadius: 17,
+    paddingHorizontal: 10,
+    backgroundColor: '#0E1726',
+    borderWidth: 1,
+    borderColor: '#1E3A5F',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  settingsName: { color: '#7DD3FC', fontSize: 11, fontWeight: '700', maxWidth: 70 },
+
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  headerTextCol: { flexDirection: 'column', alignItems: 'flex-start' },
+  brandWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  logoTitle: { fontSize: 18, fontWeight: '900', color: '#7DD3FC', letterSpacing: 2 },
+  brandDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#8B5CF6' },
+  slogan: { fontSize: 9, color: '#9DB7C9', marginTop: 1, letterSpacing: 0.6, textTransform: 'uppercase' },
 
   scrollContent: { paddingHorizontal: 16, paddingBottom: 16 },
 
@@ -362,7 +403,7 @@ const styles = StyleSheet.create({
   suggestionsLabel: { color: '#64748B', fontSize: 10, fontWeight: '700', paddingHorizontal: 12, paddingVertical: 5, textTransform: 'uppercase', letterSpacing: 0.7 },
   suggestionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 9 },
   suggestionText: { color: '#E2E8F0', flex: 1, fontSize: 13 },
-  
+
   /* TEXTE BRUT */
   rawInputWrapper: { gap: 6 },
   rawTitleInput: { backgroundColor: '#0E1726', color: '#FFFFFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#1E3A5F', fontSize: 12 },
