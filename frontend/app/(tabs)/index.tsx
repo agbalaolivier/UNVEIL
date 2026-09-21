@@ -3,7 +3,7 @@ import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
   ScrollView, FlatList, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image, useWindowDimensions
 } from 'react-native';
-import { Search, Sparkles, FileText } from 'lucide-react-native';
+import { Search, Sparkles, FileText, Settings } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../config';
@@ -42,7 +42,7 @@ const INTRO_CARDS = [
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { token, user, signOut } = useAuth();
+  const { token, user } = useAuth();
   const { width } = useWindowDimensions();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -112,7 +112,7 @@ export default function HomeScreen() {
           params: { data: JSON.stringify(data.data) },
         });
       } else {
-        Alert.alert("Erreur", data.message || "Impossible de décoder cette œuvre.");
+        Alert.alert("Erreur", data.error || data.message || "Impossible de décoder cette œuvre.");
       }
     } catch (e) {
       Alert.alert("Erreur réseau", "Vérifiez que le serveur backend est démarré.");
@@ -140,7 +140,7 @@ export default function HomeScreen() {
           params: { data: JSON.stringify(data.data) },
         });
       } else {
-        Alert.alert("Erreur", "Erreur lors de l'analyse sémiotique.");
+        Alert.alert("Erreur", data.error || "Erreur lors de l'analyse sémiotique.");
       }
     } catch (e) {
       Alert.alert("Erreur réseau", "Vérifiez le serveur backend.");
@@ -153,6 +153,15 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#050B14" />
 
+      <TouchableOpacity
+        accessibilityLabel="Ouvrir les paramètres du compte"
+        style={styles.settingsButton}
+        onPress={() => router.push('/settings')}
+      >
+        <Settings color="#7DD3FC" size={19} />
+        <Text style={styles.settingsName}>{user?.firstName || 'Compte'}</Text>
+      </TouchableOpacity>
+
       {/* HEADER COMPACT (DESIGN MODERNE ET COMPACT POUR GAIN D'ESPACE) */}
       <View style={isWebOrTablet ? styles.headerWeb : styles.headerMobile}>
         <BrainHeaderLogo size={isWebOrTablet ? 90 : 50} />
@@ -162,9 +171,6 @@ export default function HomeScreen() {
             <View style={styles.brandDot} />
           </View>
           <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
-          <TouchableOpacity onPress={signOut} style={styles.accountButton}>
-            <Text style={styles.accountText}>{user?.firstName || 'Compte'} · Déconnexion</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -314,6 +320,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#050B14', width: '100%', alignSelf: 'center' },
+  settingsButton: { position: 'absolute', top: 12, left: 14, zIndex: 10, minWidth: 38, height: 38, borderRadius: 19, paddingHorizontal: 11, backgroundColor: '#0E1726', borderWidth: 1, borderColor: '#1E3A5F', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  settingsName: { color: '#7DD3FC', fontSize: 11, fontWeight: '700', maxWidth: 90 },
   
   /* HEADER PC VS MOBILE */
   headerWeb: { alignItems: 'center', marginTop: 20, marginBottom: 16 },
@@ -323,8 +331,6 @@ const styles = StyleSheet.create({
   logoTitle: { fontSize: 20, fontWeight: '900', color: '#7DD3FC', letterSpacing: 3 },
   brandDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#8B5CF6' },
   slogan: { fontSize: 10, color: '#9DB7C9', marginTop: 2, letterSpacing: 0.8, textTransform: 'uppercase' },
-  accountButton: { marginTop: 5 },
-  accountText: { color: '#64748B', fontSize: 10, textAlign: 'center' },
 
   scrollContent: { paddingHorizontal: 16, paddingBottom: 16 },
 

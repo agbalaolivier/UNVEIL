@@ -19,6 +19,7 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (values: { firstName: string; lastName: string; email: string; password: string }) => Promise<void>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 type AuthResponse = {
@@ -123,7 +124,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, token, isLoading, signIn, signUp, signOut }}>{children}</AuthContext.Provider>;
+  const deleteAccount = async () => {
+    if (!token) throw new Error('Session absente.');
+    const response = await fetch(`${API_BASE_URL}/auth/account`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const responseText = await response.text();
+    const data = responseText ? JSON.parse(responseText) : {};
+    if (!response.ok || !data.success) throw new Error(data.error || 'Suppression impossible.');
+    await clearToken();
+    setToken(null);
+    setUser(null);
+  };
+
+  return <AuthContext.Provider value={{ user, token, isLoading, signIn, signUp, signOut, deleteAccount }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

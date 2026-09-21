@@ -16,6 +16,19 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Informations manquantes', 'Renseigne ton adresse e-mail et ton mot de passe.');
+      return;
+    }
+    if (mode === 'register' && (!firstName.trim() || !lastName.trim())) {
+      Alert.alert('Informations manquantes', 'Renseigne ton prénom et ton nom.');
+      return;
+    }
+    if (mode === 'register' && password.length < 8) {
+      Alert.alert('Mot de passe trop court', 'Le mot de passe doit contenir au moins 8 caractères.');
+      return;
+    }
+
     setLoading(true);
     try {
       if (mode === 'register') {

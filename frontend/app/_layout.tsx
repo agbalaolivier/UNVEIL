@@ -19,7 +19,8 @@ function AuthGate() {
   React.useEffect(() => {
     if (isLoading) return;
     const onAuthScreen = pathname === '/auth';
-    if (!user && !onAuthScreen) router.replace('/auth');
+    const onSharedResult = pathname === '/result';
+    if (!user && !onAuthScreen && !onSharedResult) router.replace('/auth');
     if (user && onAuthScreen) router.replace('/(tabs)');
   }, [isLoading, pathname, router, user]);
 

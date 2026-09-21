@@ -1,27 +1,61 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image, Share, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, ArrowLeft, FileText } from 'lucide-react-native';
 import BrainHeaderLogo from '../components/BrainHeaderLogo';
+import { API_BASE_URL } from '../config';
+import { useAuth } from '../context/AuthContext';
 
 export default function ResultScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { token } = useAuth();
   const [showSources, setShowSources] = useState(false);
   const [showFullText, setShowFullText] = useState(false); // État pour afficher/masquer le texte complet
+  const [result, setResult] = useState<any>(() => {
+    if (!params.data) return null;
+    try {
+      return JSON.parse(params.data as string);
+    } catch {
+      return null;
+    }
+  });
+  const [shareLoading, setShareLoading] = useState(false);
 
-  // Récupération des données passées depuis l'écran de recherche
-  const result = params.data ? JSON.parse(params.data as string) : null;
+  useEffect(() => {
+    if (result || !params.shareId) return;
+
+    fetch(`${API_BASE_URL}/share/${params.shareId}`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || 'Partage introuvable.');
+        setResult(data.data);
+      })
+      .catch((error) => Alert.alert('Partage indisponible', error.message));
+  }, [params.shareId, result]);
 
   // Fonction de partage
   const handleShare = async () => {
     if (!result) return;
+    setShareLoading(true);
     try {
       const title = result.work_title || 'cette œuvre';
       const author = result.author ? ` par ${result.author}` : '';
       const shareMessage = `Découvre le sous-texte décodé de "${title}"${author} sur UNVEIL !`;
       
-      const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://unveil.app';
+      const response = await fetch(`${API_BASE_URL}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
+        body: JSON.stringify({ result }),
+      });
+      const shareData = await response.json();
+      if (!response.ok || !shareData.success) throw new Error(shareData.error || 'Partage impossible.');
+
+      const appUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : process.env.EXPO_PUBLIC_WEB_URL;
+      if (!appUrl) throw new Error('URL publique de l’application non configurée.');
+      const shareUrl = `${appUrl}/result?shareId=${shareData.shareId}`;
 
       if (Platform.OS === 'web') {
         if (navigator.share) {
@@ -42,6 +76,9 @@ export default function ResultScreen() {
       }
     } catch (error) {
       console.error('Erreur lors du partage :', error);
+      Alert.alert('Partage impossible', error instanceof Error ? error.message : 'Réessaie plus tard.');
+    } finally {
+      setShareLoading(false);
     }
   };
 
@@ -175,9 +212,9 @@ export default function ResultScreen() {
           )}
 
           {/* BOUTON DE PARTAGE */}
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <TouchableOpacity style={styles.shareButton} onPress={handleShare} disabled={shareLoading}>
             <Share2 color="#FFFFFF" size={18} />
-            <Text style={styles.shareButtonText}>Partager la vérité sur cette œuvre</Text>
+            <Text style={styles.shareButtonText}>{shareLoading ? 'Préparation du partage...' : 'Partager la vérité sur cette œuvre'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
