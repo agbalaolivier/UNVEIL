@@ -21,6 +21,12 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
 };
 
+type AuthResponse = {
+  success: true;
+  token: string;
+  user: User;
+};
+
 const TOKEN_KEY = 'unveil.auth.token';
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -45,10 +51,22 @@ async function clearToken() {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
-async function parseResponse(response: Response) {
-  const data = await response.json();
+async function parseResponse(response: Response): Promise<AuthResponse> {
+  const responseText = await response.text();
+  let data: { success?: boolean; error?: string; token?: string; user?: User } = {};
+
+  try {
+    data = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok && !data.error) {
+    throw new Error(`Le serveur est indisponible (${response.status}).`);
+  }
   if (!response.ok || !data.success) throw new Error(data.error || 'Une erreur est survenue.');
-  return data;
+  if (!data.token || !data.user) throw new Error('Réponse d’authentification incomplète.');
+  return { success: true, token: data.token, user: data.user };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
