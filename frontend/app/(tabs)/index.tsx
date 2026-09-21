@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../config';
 import BrainHeaderLogo from '../../components/BrainHeaderLogo';
+import { useAuth } from '../../context/AuthContext';
 
 const SEARCH_HISTORY_KEY = '@unveil/search-history';
 
@@ -41,6 +42,7 @@ const INTRO_CARDS = [
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { token, user, signOut } = useAuth();
   const { width } = useWindowDimensions();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -99,7 +101,7 @@ export default function HomeScreen() {
     try {
       const response = await fetch(`${API_BASE_URL}/decode`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ query }),
       });
       const data = await response.json();
@@ -127,7 +129,7 @@ export default function HomeScreen() {
     try {
       const response = await fetch(`${API_BASE_URL}/decode-raw-text`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ rawText, title: rawTitle }),
       });
       const data = await response.json();
@@ -160,6 +162,9 @@ export default function HomeScreen() {
             <View style={styles.brandDot} />
           </View>
           <Text style={styles.slogan}>Réveille-toi et prête l'oreille !</Text>
+          <TouchableOpacity onPress={signOut} style={styles.accountButton}>
+            <Text style={styles.accountText}>{user?.firstName || 'Compte'} · Déconnexion</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -318,6 +323,8 @@ const styles = StyleSheet.create({
   logoTitle: { fontSize: 20, fontWeight: '900', color: '#7DD3FC', letterSpacing: 3 },
   brandDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#8B5CF6' },
   slogan: { fontSize: 10, color: '#9DB7C9', marginTop: 2, letterSpacing: 0.8, textTransform: 'uppercase' },
+  accountButton: { marginTop: 5 },
+  accountText: { color: '#64748B', fontSize: 10, textAlign: 'center' },
 
   scrollContent: { paddingHorizontal: 16, paddingBottom: 16 },
 
