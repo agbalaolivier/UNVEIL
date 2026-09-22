@@ -52,10 +52,11 @@ const myCache = new NodeCache({ stdTTL: 86400 });
 
 console.log("--> Clé API chargée :", process.env.GEMINI_API_KEY ? "OUI" : "NON (VIDE !)");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const primaryModel = 'gemini-3.6-flash';
-const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash';
+// Noms de modèles Gemini officiels
+const primaryModel = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-pro';
 
 const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
@@ -73,6 +74,17 @@ const isRetryableError = (error) => {
     || error?.name === 'TypeError';
 };
 
+// Fonction utilitaire pour nettoyer le JSON retourné par Gemini
+function parseGeminiJsonResponse(responseText) {
+  let cleaned = responseText.trim();
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
+  return JSON.parse(cleaned);
+}
+
 async function generateWithFallback(prompt) {
   const modelsToTry = [...new Set([primaryModel, fallbackModel].filter(Boolean))];
   let lastError;
@@ -89,7 +101,7 @@ async function generateWithFallback(prompt) {
         return await model.generateContent(prompt);
       } catch (error) {
         lastError = error;
-        console.warn(`⚠️ Échec avec ${modelName} (${error.status || error.code || 'inconnu'}).`);
+        console.warn(`⚠️ Échec avec ${modelName} (${error.status || error.code || error.message || 'inconnu'}).`);
 
         if (!isRetryableError(error) || attempt === 2) break;
         await sleep(800 * attempt);
@@ -121,46 +133,47 @@ app.post('/api/decode', requireAuth, async (req, res) => {
     console.log(`🤖 [API GEMINI] Appel externe pour : "${cacheKey}"...`);
 
     const prompt = `Analyse l'œuvre suivante : "${searchTarget}".
-    Identifie précisément son type parmi "Chanson", "Poésie", "Livre", "Discours" ou "Autre".
-    Pour une chanson ou un poème, fournis le texte complet uniquement s'il est dans le domaine public.
-    Si le texte est protégé par le droit d'auteur, laisse "full_text" vide et explique dans "content_notice"
-    que l'utilisateur peut coller lui-même le texte dans l'onglet Texte inconnu pour le lire et l'analyser.
-    Pour un livre, ne fournis jamais le texte intégral : rédige plutôt un résumé fidèle de l'œuvre et de son propos dans "author_summary".
-    Génère un objet JSON strict répondant exactement à cette structure :
-    {
-      "category": "Chanson",
-      "year": "2013",
-      "work_title": "${searchTarget}",
-      "author": "Artiste",
-      "full_text": "Texte complet uniquement si domaine public, sinon chaîne vide",
-      "content_notice": "Message court expliquant pourquoi le texte est disponible ou non",
-      "author_summary": "Résumé fidèle de l'œuvre, particulièrement utile pour un livre",
-      "mask": "Explication courte du sens de surface",
-      "reality": "Le sous-texte réel et le contexte caché",
-      "key_insights": ["Point 1", "Point 2"],
-      "decoded_quote": {
-        "original_text": "Citation",
-        "hidden_meaning": "Sens"
-      },
-      "academic_consensus": {
-        "consensus_rate": "90%",
-        "summary": "Résumé",
-        "primary_sources": ["Source 1"]
-      }
-    }`;
+Identifie précisément son type parmi "Chanson", "Poésie", "Livre", "Discours" ou "Autre".
+Pour une chanson ou un poème, fournis le texte complet uniquement s'il est dans le domaine public.
+Si le texte est protégé par le droit d'auteur, laisse "full_text" vide et explique dans "content_notice"
+que l'utilisateur peut coller lui-même le texte dans l'onglet Texte inconnu pour le lire et l'analyser.
+Pour un livre, ne fournis jamais le texte intégral : rédige plutôt un résumé fidèle de l'œuvre et de son propos dans "author_summary".
+
+Génère un objet JSON strict correspondant à ce schéma :
+{
+  "category": "Chanson",
+  "year": "2013",
+  "work_title": "${searchTarget}",
+  "author": "Nom de l'auteur / artiste",
+  "full_text": "",
+  "content_notice": "Notice informative",
+  "author_summary": "Résumé de l'œuvre",
+  "mask": "Explication courte du sens de surface",
+  "reality": "Le sous-texte réel et le contexte caché",
+  "key_insights": ["Point 1", "Point 2"],
+  "decoded_quote": {
+    "original_text": "Citation",
+    "hidden_meaning": "Sens"
+  },
+  "academic_consensus": {
+    "consensus_rate": "90%",
+    "summary": "Résumé",
+    "primary_sources": ["Source 1"]
+  }
+}`;
 
     const result = await generateWithFallback(prompt);
-    const parsedData = JSON.parse(result.response.text());
+    const parsedData = parseGeminiJsonResponse(result.response.text());
 
     myCache.set(cacheKey, parsedData);
 
     res.json({ success: true, data: parsedData, cached: false });
   } catch (error) {
-    console.error('❌ ERREUR COMPLÈTE BACKEND :', error);
+    console.error('❌ ERREUR COMPLÈTE BACKEND (/api/decode) :', error);
     const status = error?.status === 401 ? 503 : 500;
     const message = error?.status === 401
-      ? 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY dans l’environnement du serveur.'
-      : error.message;
+      ? 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY.'
+      : (error.message || 'Erreur lors du décodage');
     res.status(status).json({ success: false, error: message });
   }
 });
@@ -183,48 +196,56 @@ app.post('/api/decode-raw-text', requireAuth, async (req, res) => {
       return res.json({ success: true, data: cachedResult, cached: true });
     }
 
-    const prompt = `Analyse le texte ou les paroles suivantes${title ? ` de "${title}"` : ''} :
+    // Sécurisation du prompt pour éviter de casser la structure JSON
+    const prompt = `Tu es un expert en sémiotique et analyse littéraire.
+Analyse le texte suivant (Titre suggéré: "${workTitle}") :
 
-"${rawText}"
+--- TEXTE À ANALYSER ---
+${rawText}
+--- FIN DU TEXTE ---
 
-Le texte fourni par l'utilisateur peut être affiché intégralement dans le résultat.
+Remplis la propriété "full_text" du JSON avec la valeur exacte du texte fourni.
 Identifie son type parmi "Chanson", "Poésie", "Livre", "Discours" ou "Autre".
-Génère un objet JSON strict répondant exactement à cette structure :
-    {
-      "category": "Texte",
-      "year": "2024",
-      "work_title": "${workTitle}",
-      "author": "Auteur inconnu",
-      "full_text": "${rawText.replace(/"/g, '\\"')}",
+
+Formate la réponse sous forme d'un objet JSON strict respectant cette structure :
+{
+  "category": "Texte",
+  "year": "2024",
+  "work_title": "${workTitle}",
+  "author": "Auteur inconnu",
+  "full_text": "Le texte fourni doit être placé ici",
   "content_notice": "Texte fourni par l'utilisateur",
   "author_summary": "Résumé fidèle de l'œuvre ou du passage",
-      "mask": "Explication courte du sens de surface",
-      "reality": "Le sous-texte réel et le contexte caché",
-      "key_insights": ["Point 1", "Point 2"],
-      "decoded_quote": {
-        "original_text": "Citation pertinente",
-        "hidden_meaning": "Sens"
-      },
-      "academic_consensus": {
-        "consensus_rate": "75%",
-        "summary": "Analyse sémiotique",
-        "primary_sources": ["Analyse personnelle"]
-      }
-    }`;
+  "mask": "Explication courte du sens de surface",
+  "reality": "Le sous-texte réel et le contexte caché",
+  "key_insights": ["Point 1", "Point 2"],
+  "decoded_quote": {
+    "original_text": "Citation pertinente",
+    "hidden_meaning": "Sens"
+  },
+  "academic_consensus": {
+    "consensus_rate": "75%",
+    "summary": "Analyse sémiotique",
+    "primary_sources": ["Analyse personnelle"]
+  }
+}`;
 
     console.log("--> Envoi du prompt texte brut à Gemini...");
     const result = await generateWithFallback(prompt);
-    const parsedData = JSON.parse(result.response.text());
+    const parsedData = parseGeminiJsonResponse(result.response.text());
+
+    // On garantit que le texte brut original reste bien conservé dans l'objet final
+    parsedData.full_text = rawText;
 
     myCache.set(cacheKey, parsedData);
 
     res.json({ success: true, data: parsedData, cached: false });
   } catch (error) {
-    console.error('❌ ERREUR COMPLÈTE BACKEND :', error);
+    console.error('❌ ERREUR COMPLÈTE BACKEND (/api/decode-raw-text) :', error);
     const status = error?.status === 401 ? 503 : 500;
     const message = error?.status === 401
-      ? 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY dans l’environnement du serveur.'
-      : error.message;
+      ? 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY.'
+      : (error.message || 'Erreur lors du décodage du texte brut');
     res.status(status).json({ success: false, error: message });
   }
 });
