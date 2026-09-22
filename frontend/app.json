@@ -25,7 +25,15 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/waka-mark.png"
+      "favicon": "./assets/images/waka-mark.png",
+      "bundler": "metro",
+      "pwa": true,
+      "description": "Réveille-toi et prête l'oreille ! Décode le sens caché des œuvres.",
+      "themeColor": "#050B14",
+      "backgroundColor": "#050B14",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/"
     },
     "plugins": [
       "expo-router",
