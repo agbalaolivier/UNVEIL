@@ -8,7 +8,8 @@ import { useAuth } from '../context/AuthContext';
 export default function AuthScreen() {
   const router = useRouter();
   const { signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<'login' | 'register'>('register');
+  
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,29 +17,67 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (!email.trim() || !password) {
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !password) {
       Alert.alert('Informations manquantes', 'Renseigne ton adresse e-mail et ton mot de passe.');
       return;
     }
-    if (mode === 'register' && (!firstName.trim() || !lastName.trim())) {
-      Alert.alert('Informations manquantes', 'Renseigne ton prénom et ton nom.');
-      return;
-    }
-    if (mode === 'register' && password.length < 8) {
-      Alert.alert('Mot de passe trop court', 'Le mot de passe doit contenir au moins 8 caractères.');
-      return;
+
+    if (mode === 'register') {
+      if (!firstName.trim() || !lastName.trim()) {
+        Alert.alert('Informations manquantes', 'Renseigne ton prénom et ton nom.');
+        return;
+      }
+      if (password.length < 8) {
+        Alert.alert('Mot de passe trop court', 'Le mot de passe doit contenir au moins 8 caractères.');
+        return;
+      }
     }
 
     setLoading(true);
+
     try {
       if (mode === 'register') {
-        await signUp({ firstName, lastName, email, password });
+        await signUp({ firstName, lastName, email: cleanEmail, password });
       } else {
-        await signIn(email, password);
+        await signIn(cleanEmail, password);
       }
       router.replace('/(tabs)');
-    } catch (error) {
-      Alert.alert('Impossible de continuer', error instanceof Error ? error.message : 'Vérifie les informations saisies.');
+    } catch (error: any) {
+      const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
+
+      if (mode === 'login') {
+        // Utilisateur tente de se connecter mais n'a pas de compte
+        if (
+          errorMessage.includes('not found') || 
+          errorMessage.includes('aucun compte') || 
+          errorMessage.includes('user_not_found') ||
+          errorMessage.includes('404')
+        ) {
+          Alert.alert(
+            "Compte introuvable", 
+            "Aucun compte n'est associé à cette adresse e-mail. Veuillez cliquer sur \"Inscription\" pour en créer un."
+          );
+        } else {
+          Alert.alert("Échec de connexion", "Adresse e-mail ou mot de passe incorrect.");
+        }
+      } else if (mode === 'register') {
+        // Utilisateur tente de s'inscrire mais a déjà un compte
+        if (
+          errorMessage.includes('already exists') || 
+          errorMessage.includes('déjà') || 
+          errorMessage.includes('email_already_in_use') ||
+          errorMessage.includes('409')
+        ) {
+          Alert.alert(
+            "Compte existant", 
+            "Un compte existe déjà avec cette adresse e-mail. Veuillez cliquer sur \"Connexion\" pour vous connecter."
+          );
+        } else {
+          Alert.alert("Échec de l'inscription", error instanceof Error ? error.message : "Impossible de créer le compte.");
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -51,40 +90,112 @@ export default function AuthScreen() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <BrainHeaderLogo size={76} />
           <Text style={styles.logo}>UNVEIL</Text>
-          <Text style={styles.subtitle}>{mode === 'register' ? 'Crée ton espace de lecture' : 'Retrouve ton espace de lecture'}</Text>
+          <Text style={styles.subtitle}>
+            {mode === 'register' ? 'Crée ton espace de lecture' : 'Retrouve ton espace de lecture'}
+          </Text>
+          
           <View style={styles.introBlock}>
             <Text style={styles.introTitle}>Lire entre les lignes</Text>
             <Text style={styles.introText}>
               UNVEIL est une application d'analyse sémiotique qui révèle les sens cachés des œuvres culturelles : chansons, poésies, discours et textes littéraires.
             </Text>
             <Text style={styles.introPrompt}>
-              Crée ton compte ou connecte-toi pour commencer à décrypter.
+              {mode === 'register' 
+                ? 'Remplis le formulaire ci-dessous pour créer ton compte.' 
+                : 'Connecte-toi avec tes identifiants pour continuer.'}
             </Text>
           </View>
 
+          {/* SÉLECTEUR CONNEXION / INSCRIPTION */}
           <View style={styles.switcher}>
-            <TouchableOpacity style={[styles.switchButton, mode === 'register' && styles.switchActive]} onPress={() => setMode('register')}>
-              <UserPlus color={mode === 'register' ? '#FFFFFF' : '#7DD3FC'} size={16} />
-              <Text style={[styles.switchText, mode === 'register' && styles.switchTextActive]}>Inscription</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.switchButton, mode === 'login' && styles.switchActive]} onPress={() => setMode('login')}>
+            <TouchableOpacity 
+              style={[styles.switchButton, mode === 'login' && styles.switchActive]} 
+              onPress={() => setMode('login')}
+            >
               <LogIn color={mode === 'login' ? '#FFFFFF' : '#7DD3FC'} size={16} />
               <Text style={[styles.switchText, mode === 'login' && styles.switchTextActive]}>Connexion</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.switchButton, mode === 'register' && styles.switchActive]} 
+              onPress={() => setMode('register')}
+            >
+              <UserPlus color={mode === 'register' ? '#FFFFFF' : '#7DD3FC'} size={16} />
+              <Text style={[styles.switchText, mode === 'register' && styles.switchTextActive]}>Inscription</Text>
+            </TouchableOpacity>
           </View>
 
-          {mode === 'register' && (
+          {/* FORMULAIRE DYNAMIQUE */}
+          {mode === 'register' ? (
             <>
-              <TextInput style={styles.input} placeholder="Prénom" placeholderTextColor="#64748B" value={firstName} onChangeText={setFirstName} autoCapitalize="words" />
-              <TextInput style={styles.input} placeholder="Nom" placeholderTextColor="#64748B" value={lastName} onChangeText={setLastName} autoCapitalize="words" />
+              <TextInput 
+                style={styles.input} 
+                placeholder="Prénom" 
+                placeholderTextColor="#64748B" 
+                value={firstName} 
+                onChangeText={setFirstName} 
+                autoCapitalize="words" 
+              />
+              <TextInput 
+                style={styles.input} 
+                placeholder="Nom" 
+                placeholderTextColor="#64748B" 
+                value={lastName} 
+                onChangeText={setLastName} 
+                autoCapitalize="words" 
+              />
+              <TextInput 
+                style={styles.input} 
+                placeholder="Adresse e-mail" 
+                placeholderTextColor="#64748B" 
+                value={email} 
+                onChangeText={setEmail} 
+                keyboardType="email-address" 
+                autoCapitalize="none" 
+                autoComplete="email" 
+              />
+              <TextInput 
+                style={styles.input} 
+                placeholder="Mot de passe (8 caractères minimum)" 
+                placeholderTextColor="#64748B" 
+                value={password} 
+                onChangeText={setPassword} 
+                secureTextEntry 
+                autoComplete="password" 
+              />
+
+              <TouchableOpacity style={styles.submitButton} onPress={submit} disabled={loading}>
+                {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>Créer mon compte</Text>}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TextInput 
+                style={styles.input} 
+                placeholder="Adresse e-mail" 
+                placeholderTextColor="#64748B" 
+                value={email} 
+                onChangeText={setEmail} 
+                keyboardType="email-address" 
+                autoCapitalize="none" 
+                autoComplete="email" 
+              />
+              <TextInput 
+                style={styles.input} 
+                placeholder="Mot de passe" 
+                placeholderTextColor="#64748B" 
+                value={password} 
+                onChangeText={setPassword} 
+                secureTextEntry 
+                autoComplete="password" 
+              />
+
+              <TouchableOpacity style={styles.submitButton} onPress={submit} disabled={loading}>
+                {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>Se connecter</Text>}
+              </TouchableOpacity>
             </>
           )}
-          <TextInput style={styles.input} placeholder="Adresse e-mail" placeholderTextColor="#64748B" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
-          <TextInput style={styles.input} placeholder="Mot de passe (8 caractères minimum)" placeholderTextColor="#64748B" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
 
-          <TouchableOpacity style={styles.submitButton} onPress={submit} disabled={loading}>
-            {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>{mode === 'register' ? 'Créer mon compte' : 'Se connecter'}</Text>}
-          </TouchableOpacity>
           <Text style={styles.privacy}>Tes données servent uniquement à gérer ton compte et ta session UNVEIL.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
