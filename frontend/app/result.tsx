@@ -11,7 +11,7 @@ export default function ResultScreen() {
   const params = useLocalSearchParams();
   const { token } = useAuth();
   const [showSources, setShowSources] = useState(false);
-  const [showFullText, setShowFullText] = useState(false); // État pour afficher/masquer le texte complet
+  const [showFullText, setShowFullText] = useState(false);
   const [result, setResult] = useState<any>(() => {
     if (!params.data) return null;
     try {
@@ -34,49 +34,82 @@ export default function ResultScreen() {
       .catch((error) => Alert.alert('Partage indisponible', error.message));
   }, [params.shareId, result]);
 
-  // Fonction de partage
+  // FONCTION DE PARTAGE NETTOYÉE ET OPTIMISÉE
   const handleShare = async () => {
-    if (!result) return;
+    if (!result || shareLoading) return;
     setShareLoading(true);
+
     try {
-      const title = result.work_title || 'cette œuvre';
+      const title = result.work_title || 'Cette œuvre';
       const author = result.author ? ` par ${result.author}` : '';
-      const shareMessage = `Découvre le sous-texte décodé de "${title}"${author} sur UNVEIL !`;
       
-      const response = await fetch(`${API_BASE_URL}/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
-        body: JSON.stringify({ result }),
-      });
-      const shareData = await response.json();
-      if (!response.ok || !shareData.success) throw new Error(shareData.error || 'Partage impossible.');
+      // Message synthétique sans le texte brut ni données volumineuses
+      const shareMessage = `🔍 Découvrez le sens caché de "${title}"${author} décodé sur UNVEIL !\n\n" ${result.reality?.slice(0, 120)}... "`;
 
-      const appUrl = typeof window !== 'undefined'
-        ? window.location.origin
-        : process.env.EXPO_PUBLIC_WEB_URL;
-      if (!appUrl) throw new Error('URL publique de l’application non configurée.');
-      const shareUrl = `${appUrl}/result?shareId=${shareData.shareId}`;
+      let shareUrl = '';
 
+      // Tente de récupérer un lien court via le backend
+      try {
+        const response = await fetch(`${API_BASE_URL}/share`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json', 
+            ...(token ? { Authorization: `Bearer ${token}` } : {}) 
+          },
+          // On n'envoie sciemment pas le full_text dans la requête de partage
+          body: JSON.stringify({ 
+            result: {
+              work_title: result.work_title,
+              author: result.author,
+              category: result.category,
+              year: result.year,
+              mask: result.mask,
+              reality: result.reality,
+              key_insights: result.key_insights
+            } 
+          }),
+        });
+
+        const shareData = await response.json();
+        if (response.ok && shareData.success && shareData.shareId) {
+          const appUrl = typeof window !== 'undefined' && window.location.origin 
+            ? window.location.origin 
+            : (process.env.EXPO_PUBLIC_WEB_URL || 'https://unveil.app');
+          
+          shareUrl = `${appUrl}/result?shareId=${shareData.shareId}`;
+        }
+      } catch (err) {
+        console.warn('Impossible de générer le lien unique, partage du texte simple :', err);
+      }
+
+      const fullMessage = shareUrl ? `${shareMessage}\n\n👉 En savoir plus : ${shareUrl}` : shareMessage;
+
+      // Exécution selon la plateforme (Web / Native)
       if (Platform.OS === 'web') {
         if (navigator.share) {
           await navigator.share({
             title: `UNVEIL - ${title}`,
             text: shareMessage,
-            url: shareUrl,
+            ...(shareUrl ? { url: shareUrl } : {}),
           });
         } else if (navigator.clipboard) {
-          await navigator.clipboard.writeText(`${shareMessage} ${shareUrl}`);
-          Alert.alert('Succès', 'Le lien et le résumé ont été copiés dans le presse-papier !');
+          await navigator.clipboard.writeText(fullMessage);
+          Alert.alert('Copié !', 'Le résumé à partager a été copié dans ton presse-papier.');
+        } else {
+          Alert.alert('Partage', fullMessage);
         }
       } else {
         await Share.share({
-          message: `${shareMessage}\n${shareUrl}`,
-          url: shareUrl,
+          message: fullMessage,
+          ...(shareUrl ? { url: shareUrl } : {}),
         });
       }
-    } catch (error) {
-      console.error('Erreur lors du partage :', error);
-      Alert.alert('Partage impossible', error instanceof Error ? error.message : 'Réessaie plus tard.');
+    } catch (error: any) {
+      // Annulation par l'utilisateur ignorée
+      if (error?.name !== 'AbortError') {
+        console.error('Erreur de partage :', error);
+        Alert.alert('Partage', 'Impossible de partager pour le moment.');
+      }
     } finally {
       setShareLoading(false);
     }
@@ -92,12 +125,10 @@ export default function ResultScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-
       <Stack.Screen options={{ headerShown: false }} />
-
       <StatusBar barStyle="light-content" backgroundColor="#050B14" />
 
-      {/* HEADER FIXE (LOGO + TITRE + RETOUR) */}
+      {/* HEADER FIXE */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ArrowLeft color="#7DD3FC" size={18} />
@@ -149,7 +180,7 @@ export default function ResultScreen() {
             ))}
           </View>
 
-          {/* LECTURE DU TEXTE LORSQU'IL EST DISPONIBLE OU FOURNI PAR L'UTILISATEUR */}
+          {/* LECTURE DU TEXTE */}
           {result.full_text && (
             <View style={styles.fullTextContainer}>
               <TouchableOpacity 
@@ -212,14 +243,20 @@ export default function ResultScreen() {
           )}
 
           {/* BOUTON DE PARTAGE */}
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare} disabled={shareLoading}>
+          <TouchableOpacity 
+            style={[styles.shareButton, shareLoading && { opacity: 0.7 }]} 
+            onPress={handleShare} 
+            disabled={shareLoading}
+          >
             <Share2 color="#FFFFFF" size={18} />
-            <Text style={styles.shareButtonText}>{shareLoading ? 'Préparation du partage...' : 'Partager la vérité sur cette œuvre'}</Text>
+            <Text style={styles.shareButtonText}>
+              {shareLoading ? 'Préparation du partage...' : 'Partager la vérité sur cette œuvre'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* FOOTER WAKA'S COMPANY */}
+      {/* FOOTER */}
       <View style={styles.footerCompany}>
         <Image 
           source={require('../assets/images/waka-logo.png')}
@@ -262,7 +299,6 @@ const styles = StyleSheet.create({
   bulletDot: { color: '#6366F1', marginRight: 8, fontSize: 16 },
   bulletText: { color: '#D1D5DB', fontSize: 14, flex: 1, lineHeight: 20 },
   
-  /* NOUVEAUX STYLES POUR LE TEXTE COMPLET */
   fullTextContainer: { marginBottom: 16, borderRadius: 10, backgroundColor: '#0B132B', borderWidth: 1, borderColor: '#1E293B', overflow: 'hidden' },
   fullTextHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
   fullTextTitle: { color: '#7DD3FC', fontSize: 13, fontWeight: 'bold' },
