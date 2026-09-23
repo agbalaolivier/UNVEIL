@@ -4,56 +4,40 @@
     "slug": "unveil",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/waka-mark.png",
+    "icon": "./assets/images/waka-logo.png",
     "scheme": "frontend",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "package": "com.wakascompany.unveil",
-      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/waka-logo.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+        "backgroundColor": "#050B14",
+        "foregroundImage": "./assets/images/waka-logo.png"
+      }
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/waka-mark.png",
-      "bundler": "metro",
-      "pwa": true,
-      "description": "Réveille-toi et prête l'oreille ! Décode le sens caché des œuvres.",
-      "themeColor": "#050B14",
-      "backgroundColor": "#050B14",
-      "display": "standalone",
-      "orientation": "portrait",
-      "startUrl": "/"
+      "favicon": "./assets/images/waka-logo.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "image": "./assets/images/waka-logo.png",
+          "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#050B14"
         }
       ],
       "expo-secure-store"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
       "router": {},
