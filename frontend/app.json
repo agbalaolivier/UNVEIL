@@ -7,7 +7,6 @@
     "icon": "./assets/images/waka-logo.png",
     "scheme": "frontend",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true
     },
