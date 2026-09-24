@@ -1,8 +1,44 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
+import nodemailer from 'nodemailer';
 import { pool } from './db.js';
 
 const TOKEN_TTL = '30d';
+const RESET_CODE_TTL_MINUTES = 15;
+
+let cachedTransporter;
+
+function getMailTransporter() {
+  if (!process.env.SMTP_HOST) return null;
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+    });
+  }
+  return cachedTransporter;
+}
+
+async function sendResetCodeEmail(email, code) {
+  const transporter = getMailTransporter();
+  const subject = 'Ton code de réinitialisation UNVEIL';
+  const text = `Voici ton code de réinitialisation : ${code}\nCe code expire dans ${RESET_CODE_TTL_MINUTES} minutes.\nSi tu n’es pas à l’origine de cette demande, ignore cet e-mail.`;
+
+  if (!transporter) {
+    console.warn(`⚠️ SMTP non configuré : code de réinitialisation pour ${email} = ${code}`);
+    return;
+  }
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || 'UNVEIL <no-reply@unveil.app>',
+    to: email,
+    subject,
+    text,
+  });
+}
 
 function getJwtSecret() {
   if (!process.env.JWT_SECRET) {
@@ -126,6 +162,72 @@ export function registerAuthRoutes(app) {
     } catch (error) {
       console.error('❌ ERREUR SUPPRESSION COMPTE :', error);
       return res.status(500).json({ success: false, error: 'Suppression impossible pour le moment.' });
+    }
+  });
+
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    if (!pool) return res.status(503).json({ success: false, error: 'Authentification non configurée.' });
+
+    const genericResponse = { success: true, message: 'Si un compte existe avec cette adresse, un code de réinitialisation vient d’être envoyé.' };
+
+    try {
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ success: false, error: 'Adresse e-mail invalide.' });
+
+      const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+      if (!result.rowCount) return res.json(genericResponse);
+
+      const code = crypto.randomInt(100000, 1000000).toString();
+      const codeHash = await bcrypt.hash(code, 10);
+      const expiresAt = new Date(Date.now() + RESET_CODE_TTL_MINUTES * 60 * 1000);
+
+      await pool.query(
+        'UPDATE users SET reset_code_hash = $1, reset_code_expires = $2 WHERE id = $3',
+        [codeHash, expiresAt, result.rows[0].id],
+      );
+
+      await sendResetCodeEmail(email, code);
+      return res.json(genericResponse);
+    } catch (error) {
+      console.error('❌ ERREUR MOT DE PASSE OUBLIÉ :', error);
+      return res.status(500).json({ success: false, error: 'Envoi du code impossible pour le moment.' });
+    }
+  });
+
+  app.post('/api/auth/reset-password', async (req, res) => {
+    if (!pool) return res.status(503).json({ success: false, error: 'Authentification non configurée.' });
+
+    try {
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      const code = typeof req.body.code === 'string' ? req.body.code.trim() : '';
+      const password = typeof req.body.password === 'string' ? req.body.password : '';
+
+      if (!email || !code) return res.status(400).json({ success: false, error: 'E-mail et code requis.' });
+      if (password.length < 8) return res.status(400).json({ success: false, error: 'Le mot de passe doit contenir au moins 8 caractères.' });
+
+      const result = await pool.query(
+        'SELECT id, reset_code_hash, reset_code_expires FROM users WHERE email = $1',
+        [email],
+      );
+      const user = result.rows[0];
+
+      if (!user?.reset_code_hash || !user.reset_code_expires || new Date(user.reset_code_expires) < new Date()) {
+        return res.status(400).json({ success: false, error: 'Code invalide ou expiré.' });
+      }
+
+      const isCodeValid = await bcrypt.compare(code, user.reset_code_hash);
+      if (!isCodeValid) return res.status(400).json({ success: false, error: 'Code invalide ou expiré.' });
+
+      const passwordHash = await bcrypt.hash(password, 12);
+      await pool.query(
+        'UPDATE users SET password_hash = $1, reset_code_hash = NULL, reset_code_expires = NULL WHERE id = $2',
+        [passwordHash, user.id],
+      );
+
+      return res.json({ success: true, message: 'Mot de passe mis à jour. Tu peux te connecter.' });
+    } catch (error) {
+      console.error('❌ ERREUR RÉINITIALISATION MOT DE PASSE :', error);
+      return res.status(500).json({ success: false, error: 'Réinitialisation impossible pour le moment.' });
     }
   });
 }

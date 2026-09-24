@@ -198,6 +198,10 @@ export default function AuthScreen() {
               <TouchableOpacity style={styles.submitButton} onPress={submit} disabled={loading}>
                 {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitText}>Se connecter</Text>}
               </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => router.push('/forgot-password')}>
+                <Text style={styles.forgotPasswordLink}>Mot de passe oublié ?</Text>
+              </TouchableOpacity>
             </>
           )}
 
@@ -226,5 +230,6 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#0E1726', color: '#FFFFFF', borderWidth: 1, borderColor: '#1E3A5F', borderRadius: 9, paddingHorizontal: 13, paddingVertical: 12, marginBottom: 9, fontSize: 14 },
   submitButton: { backgroundColor: '#2563EB', borderRadius: 9, alignItems: 'center', paddingVertical: 13, marginTop: 8 },
   submitText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
+  forgotPasswordLink: { color: '#7DD3FC', textAlign: 'center', fontSize: 12, fontWeight: '700', marginTop: 14 },
   privacy: { color: '#64748B', textAlign: 'center', fontSize: 11, lineHeight: 16, marginTop: 16 },
 });

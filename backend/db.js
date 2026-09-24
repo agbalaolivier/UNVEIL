@@ -27,10 +27,15 @@ export async function initializeDatabase() {
       email VARCHAR(320) NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      reset_code_hash TEXT,
+      reset_code_expires TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_code_hash TEXT');
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_code_expires TIMESTAMPTZ');
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS shared_results (

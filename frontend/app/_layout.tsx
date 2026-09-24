@@ -21,7 +21,8 @@ function AuthGate() {
     if (isLoading) return;
     const onAuthScreen = pathname === '/auth';
     const onSharedResult = pathname === '/result';
-    if (!user && !onAuthScreen && !onSharedResult) router.replace('/auth');
+    const onForgotPassword = pathname === '/forgot-password';
+    if (!user && !onAuthScreen && !onSharedResult && !onForgotPassword) router.replace('/auth');
     if (user && onAuthScreen) router.replace('/(tabs)');
   }, [isLoading, pathname, router, user]);
 
