@@ -77,6 +77,16 @@ export default function HomeScreen() {
     .filter((title) => title.toLowerCase().includes(searchQuery.trim().toLowerCase()))
     .slice(0, 5);
 
+  const formatApiError = (message?: string) => {
+    if (!message) return 'Impossible de décoder cette œuvre pour le moment.';
+
+    const text = message
+      .replace(/^GoogleGenerativeAI Error:\s*/i, '')
+      .replace(/Candidate was blocked.*$/i, 'Cette œuvre semble protégée ou trop proche d’un texte existant. Essayez un autre titre ou un extrait plus court.');
+
+    return text;
+  };
+
   const rememberTitle = async (title: string) => {
     const normalizedTitle = title.trim();
     if (!normalizedTitle) return;
@@ -114,7 +124,7 @@ export default function HomeScreen() {
           params: { data: JSON.stringify(data.data) },
         });
       } else {
-        Alert.alert("Erreur", data.error || data.message || "Impossible de décoder cette œuvre.");
+        Alert.alert("Erreur", formatApiError(data.error || data.message || "Impossible de décoder cette œuvre."));
       }
     } catch (e) {
       Alert.alert("Erreur réseau", "Vérifiez que le serveur backend est démarré.");
@@ -142,7 +152,7 @@ export default function HomeScreen() {
           params: { data: JSON.stringify(data.data) },
         });
       } else {
-        Alert.alert("Erreur", data.error || "Erreur lors de l'analyse sémiotique.");
+        Alert.alert("Erreur", formatApiError(data.error || "Erreur lors de l'analyse sémiotique."));
       }
     } catch (e) {
       Alert.alert("Erreur réseau", "Vérifiez le serveur backend.");
