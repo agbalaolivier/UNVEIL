@@ -74,6 +74,23 @@ const isRetryableError = (error) => {
     || error?.name === 'TypeError';
 };
 
+const isGeminiBlockedError = (error) => {
+  const text = `${error?.message || ''} ${error?.status || ''} ${error?.code || ''} ${error?.details || ''}`.toLowerCase();
+  return /candidate was blocked|recitation|filtered because it may contain material|copyright|safety|blocked due to|policy violation|prompt blocked/i.test(text);
+};
+
+const getGeminiFriendlyError = (error, fallbackMessage) => {
+  if (isGeminiBlockedError(error)) {
+    return 'Cette œuvre semble protégée ou a été bloquée par les filtres de sécurité de Gemini. Essayez un autre titre, un extrait plus court ou un texte public.';
+  }
+
+  if (error?.status === 401) {
+    return 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY.';
+  }
+
+  return error?.message || fallbackMessage;
+};
+
 // Fonction utilitaire pour nettoyer le JSON retourné par Gemini
 function parseGeminiJsonResponse(responseText) {
   let cleaned = responseText.trim();
@@ -82,7 +99,13 @@ function parseGeminiJsonResponse(responseText) {
   } else if (cleaned.startsWith('```')) {
     cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
   }
-  return JSON.parse(cleaned);
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (jsonError) {
+    const preview = cleaned.slice(0, 300).replace(/\s+/g, ' ');
+    throw new Error(`Réponse Gemini invalide : ${preview || 'réponse vide'}`);
+  }
 }
 
 async function generateWithFallback(prompt) {
@@ -102,6 +125,14 @@ async function generateWithFallback(prompt) {
       } catch (error) {
         lastError = error;
         console.warn(`⚠️ Échec avec ${modelName} (${error.status || error.code || error.message || 'inconnu'}).`);
+
+        if (isGeminiBlockedError(error)) {
+          throw Object.assign(new Error('Gemini a bloqué cette génération pour cause de contenu protégé ou de sécurité.'), {
+            status: 400,
+            code: 'GEMINI_BLOCKED',
+            message: getGeminiFriendlyError(error, 'Gemini a bloqué cette génération pour cause de contenu protégé ou de sécurité.'),
+          });
+        }
 
         if (!isRetryableError(error) || attempt === 2) break;
         await sleep(800 * attempt);
@@ -134,12 +165,12 @@ app.post('/api/decode', requireAuth, async (req, res) => {
 
     const prompt = `Analyse l'œuvre suivante : "${searchTarget}".
 Identifie précisément son type parmi "Chanson", "Poésie", "Livre", "Discours" ou "Autre".
-Pour une chanson ou un poème, fournis le texte complet uniquement s'il est dans le domaine public.
-Si le texte est protégé par le droit d'auteur, laisse "full_text" vide et explique dans "content_notice"
-que l'utilisateur peut coller lui-même le texte dans l'onglet Texte inconnu pour le lire et l'analyser.
-Pour un livre, ne fournis jamais le texte intégral : rédige plutôt un résumé fidèle de l'œuvre et de son propos dans "author_summary".
+RÈGLE ABSOLUE : ne jamais réécrire ni reproduire le texte intégral d'une œuvre protégée par le droit d'auteur, y compris paroles de chanson, poèmes récents ou extraits de livres.
+Si l'œuvre est protégée, laisse "full_text" vide, mets "content_notice" à une note claire expliquant que le texte est protégé et que l'utilisateur peut le coller dans l'onglet Texte inconnu pour l'analyser, et fournis un résumé analytique dans "author_summary".
+Pour un livre, ne fournis jamais le texte intégral : rédige plutôt un résumé fidèle de l'œuvre et de son propos.
+Génère uniquement un objet JSON valide, sans markdown, sans texte hors JSON.
 
-Génère un objet JSON strict correspondant à ce schéma :
+Schéma JSON strict :
 {
   "category": "Chanson",
   "year": "2013",
@@ -170,10 +201,8 @@ Génère un objet JSON strict correspondant à ce schéma :
     res.json({ success: true, data: parsedData, cached: false });
   } catch (error) {
     console.error('❌ ERREUR COMPLÈTE BACKEND (/api/decode) :', error);
-    const status = error?.status === 401 ? 503 : 500;
-    const message = error?.status === 401
-      ? 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY.'
-      : (error.message || 'Erreur lors du décodage');
+    const status = error?.status === 401 ? 503 : (error?.status || 500);
+    const message = getGeminiFriendlyError(error, 'Erreur lors du décodage');
     res.status(status).json({ success: false, error: message });
   }
 });
@@ -204,16 +233,17 @@ Analyse le texte suivant (Titre suggéré: "${workTitle}") :
 ${rawText}
 --- FIN DU TEXTE ---
 
-Remplis la propriété "full_text" du JSON avec la valeur exacte du texte fourni.
+RÈGLE ABSOLUE : si ce texte est une œuvre protégée par le droit d'auteur, ne reproduis pas son contenu intégral. Dans ce cas, mets "full_text" à "" et explique clairement dans "content_notice" que le texte a été fourni par l'utilisateur et qu'il peut être analysé sans reproduction intégrale.
 Identifie son type parmi "Chanson", "Poésie", "Livre", "Discours" ou "Autre".
+Génère uniquement un objet JSON valide, sans markdown, sans texte hors JSON.
 
-Formate la réponse sous forme d'un objet JSON strict respectant cette structure :
+Structure JSON strict :
 {
   "category": "Texte",
   "year": "2024",
   "work_title": "${workTitle}",
   "author": "Auteur inconnu",
-  "full_text": "Le texte fourni doit être placé ici",
+  "full_text": "",
   "content_notice": "Texte fourni par l'utilisateur",
   "author_summary": "Résumé fidèle de l'œuvre ou du passage",
   "mask": "Explication courte du sens de surface",
@@ -242,10 +272,8 @@ Formate la réponse sous forme d'un objet JSON strict respectant cette structure
     res.json({ success: true, data: parsedData, cached: false });
   } catch (error) {
     console.error('❌ ERREUR COMPLÈTE BACKEND (/api/decode-raw-text) :', error);
-    const status = error?.status === 401 ? 503 : 500;
-    const message = error?.status === 401
-      ? 'Le service d’analyse est mal authentifié. Vérifiez GEMINI_API_KEY.'
-      : (error.message || 'Erreur lors du décodage du texte brut');
+    const status = error?.status === 401 ? 503 : (error?.status || 500);
+    const message = getGeminiFriendlyError(error, 'Erreur lors du décodage du texte brut');
     res.status(status).json({ success: false, error: message });
   }
 });
