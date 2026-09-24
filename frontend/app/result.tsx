@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Alert, Image, Share, Platform } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, StatusBar, Alert, Image, Share, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Sparkles, ChevronDown, ChevronUp, Share2, BookOpen, ArrowLeft, FileText } from 'lucide-react-native';
 import BrainHeaderLogo from '../components/BrainHeaderLogo';
@@ -273,13 +274,13 @@ export default function ResultScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#050B14', width: '100%', maxWidth: 800, alignSelf: 'center' },
-  header: { alignItems: 'center', marginTop: 12, marginBottom: 14, position: 'relative' },
+  header: { alignItems: 'center', paddingHorizontal: 48, marginTop: 12, marginBottom: 14, position: 'relative' },
   backButton: { position: 'absolute', left: 16, top: 12, flexDirection: 'row', alignItems: 'center', gap: 6, zIndex: 10 },
   backText: { color: '#7DD3FC', fontSize: 13, fontWeight: '600' },
   brandWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: -5 },
   logoTitle: { fontSize: 24, fontWeight: '900', color: '#7DD3FC', letterSpacing: 4 },
   brandDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#8B5CF6' },
-  slogan: { fontSize: 11, color: '#9DB7C9', marginTop: 4, letterSpacing: 1.1, textTransform: 'uppercase' },
+  slogan: { fontSize: 11, color: '#9DB7C9', marginTop: 4, letterSpacing: 1.1, textTransform: 'uppercase', textAlign: 'center' },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 110 },
   resultCard: { backgroundColor: '#111827', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#1F2937', marginBottom: 20 },
   metaBadge: { alignSelf: 'flex-start', backgroundColor: '#374151', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 4 },

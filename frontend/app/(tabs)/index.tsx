@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity,
-  ScrollView, FlatList, ActivityIndicator, SafeAreaView, StatusBar, Alert, Image, useWindowDimensions
+  ScrollView, FlatList, ActivityIndicator, StatusBar, Alert, Image, useWindowDimensions,
+  KeyboardAvoidingView, Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Sparkles, FileText, Settings } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -182,7 +184,16 @@ export default function HomeScreen() {
         <View style={styles.headerSideRight} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} nestedScrollEnabled={true}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+      >
 
         {/* AFFICHAGE CARTES */}
         {isWebOrTablet ? (
@@ -310,6 +321,7 @@ export default function HomeScreen() {
           </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* FOOTER EN BAS */}
       <View style={styles.footerCompany}>
@@ -329,6 +341,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#050B14', width: '100%', alignSelf: 'center' },
+  flex: { flex: 1 },
 
   /* NOUVELLE STRUCTURE DE HEADER (RESPONSIVE) */
   headerWrapper: {
@@ -362,16 +375,18 @@ const styles = StyleSheet.create({
   settingsName: { color: '#7DD3FC', fontSize: 11, fontWeight: '700', maxWidth: 70 },
 
   headerCenter: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
   },
-  headerTextCol: { flexDirection: 'column', alignItems: 'flex-start' },
+  headerTextCol: { flex: 1, minWidth: 0, flexDirection: 'column', alignItems: 'flex-start' },
   brandWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   logoTitle: { fontSize: 18, fontWeight: '900', color: '#7DD3FC', letterSpacing: 2 },
   brandDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#8B5CF6' },
-  slogan: { fontSize: 9, color: '#9DB7C9', marginTop: 1, letterSpacing: 0.6, textTransform: 'uppercase' },
+  slogan: { fontSize: 9, color: '#9DB7C9', marginTop: 1, letterSpacing: 0.6, textTransform: 'uppercase', flexShrink: 1 },
 
   scrollContent: { paddingHorizontal: 16, paddingBottom: 16 },
 
