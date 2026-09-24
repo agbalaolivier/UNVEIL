@@ -4,7 +4,7 @@
     "slug": "unveil",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/waka-logo.png",
+    "icon": "./assets/images/waka-mark.png",
     "scheme": "frontend",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -14,7 +14,7 @@
       "package": "com.wakascompany.unveil",
       "adaptiveIcon": {
         "backgroundColor": "#050B14",
-        "foregroundImage": "./assets/images/waka-logo.png"
+        "foregroundImage": "./assets/images/waka-mark.png"
       }
     },
     "web": {

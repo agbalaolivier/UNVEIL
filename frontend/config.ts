@@ -1,9 +1,11 @@
-import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
 const customApiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 const remoteApiFallback = 'https://unveil-vs1v.onrender.com/api';
 
-const isLocalWeb = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const isLocalWeb = Platform.OS === 'web'
+	&& typeof window !== 'undefined'
+	&& ['localhost', '127.0.0.1'].includes(window.location?.hostname ?? '');
 
 // En mode web local -> localhost
 // En mode APK / Production -> backend distant sur Render
