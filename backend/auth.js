@@ -1,43 +1,38 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
-import nodemailer from 'nodemailer';
 import { pool } from './db.js';
 
 const TOKEN_TTL = '30d';
 const RESET_CODE_TTL_MINUTES = 15;
 
-let cachedTransporter;
-
-function getMailTransporter() {
-  if (!process.env.SMTP_HOST) return null;
-  if (!cachedTransporter) {
-    cachedTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
-    });
-  }
-  return cachedTransporter;
-}
-
 async function sendResetCodeEmail(email, code) {
-  const transporter = getMailTransporter();
   const subject = 'Ton code de réinitialisation UNVEIL';
   const text = `Voici ton code de réinitialisation : ${code}\nCe code expire dans ${RESET_CODE_TTL_MINUTES} minutes.\nSi tu n’es pas à l’origine de cette demande, ignore cet e-mail.`;
 
-  if (!transporter) {
-    console.warn(`⚠️ SMTP non configuré : code de réinitialisation pour ${email} = ${code}`);
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(`⚠️ RESEND_API_KEY absente : code de réinitialisation pour ${email} = ${code}`);
     return;
   }
 
-  await transporter.sendMail({
-    from: process.env.MAIL_FROM || 'UNVEIL <no-reply@unveil.app>',
-    to: email,
-    subject,
-    text,
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: process.env.MAIL_FROM || 'UNVEIL <onboarding@resend.dev>',
+      to: [email],
+      subject,
+      text,
+    }),
   });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Envoi Resend échoué (${response.status}) : ${errorBody}`);
+  }
 }
 
 function getJwtSecret() {
