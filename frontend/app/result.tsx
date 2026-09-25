@@ -43,9 +43,35 @@ export default function ResultScreen() {
     try {
       const title = result.work_title || 'Cette œuvre';
       const author = result.author ? ` par ${result.author}` : '';
-      
-      // Message synthétique sans le texte brut ni données volumineuses
-      const shareMessage = `🔍 Découvrez le sens caché de "${title}"${author} décodé sur UNVEIL !\n\n" ${result.reality?.slice(0, 120)}... "`;
+
+      const contextSummary = result.mask?.trim() || result.author_summary?.trim() || 'Une lecture profonde à découvrir.';
+      const realitySnippet = result.reality?.trim() || 'Une analyse sémiotique révélant le sous-texte caché.';
+      const keyInsight = result.key_insights?.[0]?.trim() || 'Le sens caché change tout.';
+
+      const cleanReality = realitySnippet.replace(/\s+/g, ' ').trim();
+      const cleanContext = contextSummary.replace(/\s+/g, ' ').trim();
+      const teaserReality = cleanReality.length > 220 ? `${cleanReality.slice(0, 220).trim()}...` : cleanReality;
+      const teaserContext = cleanContext.length > 140 ? `${cleanContext.slice(0, 140).trim()}...` : cleanContext;
+      const insightList = Array.isArray(result.key_insights)
+        ? result.key_insights.map((item: string) => item?.trim()).filter(Boolean).slice(0, 3)
+        : [];
+
+      const shareMessage = [
+        '🧠 UNVEIL',
+        'Réveille-toi et prête l’oreille !',
+        '',
+        `“${title}”${author}`,
+        '',
+        'Le sous-texte se révèle :',
+        `“${teaserReality}”`,
+        '',
+        'En bref :',
+        ...(insightList.length ? insightList.map((item: string, index: number) => `${index + 1}. ${item}`) : [`1. ${keyInsight}`]),
+        '',
+        `Contexte : ${teaserContext}`,
+        '',
+        '👉 Ouvre UNVEIL pour lire l’analyse complète et voir le sens caché dans son contexte.'
+      ].join('\n');
 
       let shareUrl = '';
 
@@ -83,7 +109,7 @@ export default function ResultScreen() {
         console.warn('Impossible de générer le lien unique, partage du texte simple :', err);
       }
 
-      const fullMessage = shareUrl ? `${shareMessage}\n\n👉 En savoir plus : ${shareUrl}` : shareMessage;
+      const fullMessage = shareUrl ? `${shareMessage}\n\n� ${shareUrl}` : shareMessage;
 
       // Exécution selon la plateforme (Web / Native)
       if (Platform.OS === 'web') {
@@ -95,7 +121,7 @@ export default function ResultScreen() {
           });
         } else if (navigator.clipboard) {
           await navigator.clipboard.writeText(fullMessage);
-          Alert.alert('Copié !', 'Le résumé à partager a été copié dans ton presse-papier.');
+          Alert.alert('Copié !', 'Le message de partage a été copié dans ton presse-papier.');
         } else {
           Alert.alert('Partage', fullMessage);
         }
