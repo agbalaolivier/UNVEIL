@@ -43,39 +43,9 @@ export default function ResultScreen() {
     try {
       const title = result.work_title || 'Cette œuvre';
       const author = result.author ? ` par ${result.author}` : '';
+      const shareText = `🧠 UNVEIL\n\nDécouvre « ${title} »${author}, décrypté par UNVEIL.\n\nL’analyse complète t’attend ici :`;
+      let shareUrl: string;
 
-      const contextSummary = result.mask?.trim() || result.author_summary?.trim() || 'Une lecture profonde à découvrir.';
-      const realitySnippet = result.reality?.trim() || 'Une analyse sémiotique révélant le sous-texte caché.';
-      const keyInsight = result.key_insights?.[0]?.trim() || 'Le sens caché change tout.';
-
-      const cleanReality = realitySnippet.replace(/\s+/g, ' ').trim();
-      const cleanContext = contextSummary.replace(/\s+/g, ' ').trim();
-      const teaserReality = cleanReality.length > 220 ? `${cleanReality.slice(0, 220).trim()}...` : cleanReality;
-      const teaserContext = cleanContext.length > 140 ? `${cleanContext.slice(0, 140).trim()}...` : cleanContext;
-      const insightList = Array.isArray(result.key_insights)
-        ? result.key_insights.map((item: string) => item?.trim()).filter(Boolean).slice(0, 3)
-        : [];
-
-      const shareMessage = [
-        '🧠 UNVEIL',
-        'Réveille-toi et prête l’oreille !',
-        '',
-        `“${title}”${author}`,
-        '',
-        'Le sous-texte se révèle :',
-        `“${teaserReality}”`,
-        '',
-        'En bref :',
-        ...(insightList.length ? insightList.map((item: string, index: number) => `${index + 1}. ${item}`) : [`1. ${keyInsight}`]),
-        '',
-        `Contexte : ${teaserContext}`,
-        '',
-        '👉 Ouvre UNVEIL pour lire l’analyse complète et voir le sens caché dans son contexte.'
-      ].join('\n');
-
-      let shareUrl = '';
-
-      // Tente de récupérer un lien court via le backend
       try {
         const response = await fetch(`${API_BASE_URL}/share`, {
           method: 'POST',
@@ -83,7 +53,6 @@ export default function ResultScreen() {
             'Content-Type': 'application/json', 
             ...(token ? { Authorization: `Bearer ${token}` } : {}) 
           },
-          // On n'envoie sciemment pas le full_text dans la requête de partage
           body: JSON.stringify({ 
             result: {
               work_title: result.work_title,
@@ -91,33 +60,43 @@ export default function ResultScreen() {
               category: result.category,
               year: result.year,
               mask: result.mask,
+              author_summary: result.author_summary,
               reality: result.reality,
-              key_insights: result.key_insights
+              key_insights: result.key_insights,
+              content_notice: result.content_notice,
+              decoded_quote: result.decoded_quote,
+              academic_consensus: result.academic_consensus
             } 
           }),
         });
 
         const shareData = await response.json();
-        if (response.ok && shareData.success && shareData.shareId) {
-          const appUrl = typeof window !== 'undefined' && window.location.origin 
-            ? window.location.origin 
-            : (process.env.EXPO_PUBLIC_WEB_URL || 'https://unveil.app');
-          
-          shareUrl = `${appUrl}/result?shareId=${shareData.shareId}`;
+        if (!response.ok || !shareData.success || !shareData.shareId) {
+          throw new Error(shareData.error || 'Impossible de créer le lien de partage.');
         }
-      } catch (err) {
-        console.warn('Impossible de générer le lien unique, partage du texte simple :', err);
+
+        const isLocalWeb = Platform.OS === 'web'
+          && typeof window !== 'undefined'
+          && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        const appUrl = process.env.EXPO_PUBLIC_WEB_URL
+          || (Platform.OS === 'web' && typeof window !== 'undefined' && !isLocalWeb
+            ? window.location.origin
+            : 'https://unveil-tau-eight.vercel.app');
+        shareUrl = `${appUrl.replace(/\/$/, '')}/result?shareId=${encodeURIComponent(shareData.shareId)}`;
+      } catch (error) {
+        console.warn('Impossible de générer le lien unique :', error);
+        Alert.alert('Partage indisponible', 'Le lien vers cette analyse n’a pas pu être créé. Réessaie dans un instant.');
+        return;
       }
 
-      const fullMessage = shareUrl ? `${shareMessage}\n\n� ${shareUrl}` : shareMessage;
+      const fullMessage = `${shareText}\n${shareUrl}`;
 
-      // Exécution selon la plateforme (Web / Native)
       if (Platform.OS === 'web') {
         if (navigator.share) {
           await navigator.share({
             title: `UNVEIL - ${title}`,
-            text: shareMessage,
-            ...(shareUrl ? { url: shareUrl } : {}),
+            text: shareText,
+            url: shareUrl,
           });
         } else if (navigator.clipboard) {
           await navigator.clipboard.writeText(fullMessage);
@@ -126,10 +105,9 @@ export default function ResultScreen() {
           Alert.alert('Partage', fullMessage);
         }
       } else {
-        await Share.share({
-          message: fullMessage,
-          ...(shareUrl ? { url: shareUrl } : {}),
-        });
+        await Share.share(Platform.OS === 'ios'
+          ? { title: `UNVEIL - ${title}`, message: shareText, url: shareUrl }
+          : { title: `UNVEIL - ${title}`, message: fullMessage });
       }
     } catch (error: any) {
       // Annulation par l'utilisateur ignorée
