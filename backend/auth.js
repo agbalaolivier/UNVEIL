@@ -162,14 +162,14 @@ export function registerAuthRoutes(app) {
   app.post('/api/auth/forgot-password', async (req, res) => {
     if (!pool) return res.status(503).json({ success: false, error: 'Authentification non configurée.' });
 
-    const genericResponse = { success: true, message: 'Si un compte existe avec cette adresse, un code de réinitialisation vient d’être envoyé.' };
-
     try {
       const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
       if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ success: false, error: 'Adresse e-mail invalide.' });
 
       const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-      if (!result.rowCount) return res.json(genericResponse);
+      if (!result.rowCount) {
+        return res.json({ success: true, accountExists: false, message: 'Aucun compte n’existe avec cette adresse.' });
+      }
 
       const code = crypto.randomInt(100000, 1000000).toString();
       const codeHash = await bcrypt.hash(code, 10);
@@ -181,7 +181,7 @@ export function registerAuthRoutes(app) {
       );
 
       await sendResetCodeEmail(email, code);
-      return res.json(genericResponse);
+      return res.json({ success: true, accountExists: true, message: 'Un code de réinitialisation vient d’être envoyé.' });
     } catch (error) {
       console.error('❌ ERREUR MOT DE PASSE OUBLIÉ :', error);
       return res.status(500).json({ success: false, error: 'Envoi du code impossible pour le moment.' });

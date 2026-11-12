@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { LogIn, UserPlus } from 'lucide-react-native';
 import BrainHeaderLogo from '../components/BrainHeaderLogo';
 import { useAuth } from '../context/AuthContext';
@@ -10,10 +10,12 @@ export default function AuthScreen() {
   const router = useRouter();
   const { signIn, signUp } = useAuth();
   
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const params = useLocalSearchParams<{ mode?: string; email?: string }>();
+
+  const [mode, setMode] = useState<'login' | 'register'>(params.mode === 'register' ? 'register' : 'login');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(typeof params.email === 'string' ? params.email : '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 

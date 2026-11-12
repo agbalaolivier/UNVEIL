@@ -37,11 +37,17 @@ export default function ForgotPasswordScreen() {
       const data = await parseJsonResponse(response);
       if (!response.ok || !data.success) throw new Error(data.error || 'Envoi du code impossible.');
 
+      if (data.accountExists === false) {
+        setStep('request');
+        Alert.alert('Aucun compte trouvé', 'Aucun compte n’existe avec cette adresse. Crée-en un pour commencer.', [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Créer un compte', onPress: () => router.replace({ pathname: '/auth', params: { mode: 'register', email: cleanEmail } }) },
+        ]);
+        return;
+      }
+
       setStep('reset');
-      Alert.alert(
-        'Vérifie ta boîte mail',
-        'Si un compte existe avec cette adresse, un code a été envoyé. Pense aussi à vérifier tes courriers indésirables.',
-      );
+      Alert.alert('Code envoyé', 'Un code vient de t’être envoyé par e-mail. Pense aussi à vérifier tes courriers indésirables.');
     } catch (error) {
       Alert.alert('Erreur', error instanceof Error ? error.message : 'Envoi du code impossible.');
     } finally {
@@ -108,7 +114,7 @@ export default function ForgotPasswordScreen() {
             <Text style={styles.introText}>
               {step === 'request'
                 ? 'Renseigne ton adresse e-mail pour recevoir un code de réinitialisation.'
-                : `Si un compte existe avec ${email.trim()}, un code a été envoyé. Renseigne-le ci-dessous avec ton nouveau mot de passe.`}
+                : `Un code a été envoyé à ${email.trim()}. Renseigne-le ci-dessous avec ton nouveau mot de passe.`}
             </Text>
           </View>
 
