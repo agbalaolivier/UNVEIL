@@ -11,8 +11,7 @@ async function sendResetCodeEmail(email, code) {
   const text = `Voici ton code de réinitialisation : ${code}\nCe code expire dans ${RESET_CODE_TTL_MINUTES} minutes.\nSi tu n’es pas à l’origine de cette demande, ignore cet e-mail.`;
 
   if (!process.env.RESEND_API_KEY) {
-    console.warn(`⚠️ RESEND_API_KEY absente : code de réinitialisation pour ${email} = ${code}`);
-    return;
+    throw new Error('RESEND_API_KEY est absente : envoi du code de réinitialisation impossible.');
   }
 
   const response = await fetch('https://api.resend.com/emails', {

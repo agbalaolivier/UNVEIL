@@ -38,7 +38,10 @@ export default function ForgotPasswordScreen() {
       if (!response.ok || !data.success) throw new Error(data.error || 'Envoi du code impossible.');
 
       setStep('reset');
-      Alert.alert('Code envoyé', 'Si un compte existe avec cette adresse, un code vient de t’être envoyé par e-mail.');
+      Alert.alert(
+        'Vérifie ta boîte mail',
+        'Si un compte existe avec cette adresse, un code a été envoyé. Pense aussi à vérifier tes courriers indésirables.',
+      );
     } catch (error) {
       Alert.alert('Erreur', error instanceof Error ? error.message : 'Envoi du code impossible.');
     } finally {
@@ -105,7 +108,7 @@ export default function ForgotPasswordScreen() {
             <Text style={styles.introText}>
               {step === 'request'
                 ? 'Renseigne ton adresse e-mail pour recevoir un code de réinitialisation.'
-                : `Un code a été envoyé à ${email.trim()}. Renseigne-le ci-dessous avec ton nouveau mot de passe.`}
+                : `Si un compte existe avec ${email.trim()}, un code a été envoyé. Renseigne-le ci-dessous avec ton nouveau mot de passe.`}
             </Text>
           </View>
 

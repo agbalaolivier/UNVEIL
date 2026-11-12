@@ -47,6 +47,17 @@ Appuyez sur:
 | "Connexion refusée" | Le backend n'écoute pas sur le port 5000 |
 | API ne répond pas | Vérifiez que vous êtes sur le même réseau WiFi |
 
+### 📧 Réinitialisation du mot de passe
+
+L'envoi des codes nécessite une clé API Resend dans la configuration du backend :
+
+```env
+RESEND_API_KEY=re_...
+MAIL_FROM=UNVEIL <support@votredomaine.com>
+```
+
+En production, ajoute ces variables dans l'environnement du service backend (par exemple dans Render), puis redémarre-le. Le domaine utilisé dans `MAIL_FROM` doit être vérifié dans Resend. L'adresse de test `onboarding@resend.dev` est limitée aux destinataires autorisés par Resend pour les tests.
+
 ---
 
 **Le backend doit toujours être en cours d'exécution pour que l'app fonctionne!**
